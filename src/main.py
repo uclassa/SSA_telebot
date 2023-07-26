@@ -61,7 +61,6 @@ async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Main
 
 if __name__ == "__main__":
-
     app = Application.builder().token(TOKEN).build()
     
     # Commands
