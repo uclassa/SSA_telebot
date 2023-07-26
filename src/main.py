@@ -6,8 +6,7 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
 # Load environment variables from ./../config/config.env
-config_dir = os.path.join(os.path.dirname(__file__), '..', 'config')
-dotenv_path = os.path.join(config_dir, 'config.env')
+dotenv_path = os.path.join(os.path.dirname(__file__), '..', 'config.env')
 load_dotenv(dotenv_path)
 
 TOKEN: final = os.environ.get("TOKEN")
