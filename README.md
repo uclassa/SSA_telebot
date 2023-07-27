@@ -6,7 +6,10 @@ Telegram Bot for SSA
  
 ## Developer Details
 Currently hosted on https://www.pythonanywhere.com 
+- [ ] Look into hosting on AWS or Github Free Server?
 
+<details>
+<summary><h3>Telegram API Details</h3></summary>
 - Bot name: SSA Ah Gong \
 - Bot username: uclassa_telebot \
 - Bot description: As SSA's Ah Gong, I shall watch over SSA - tele channels and make people's lifes easier.
@@ -18,25 +21,25 @@ Currently hosted on https://www.pythonanywhere.com
 - Image from Ah Kong Durian (https://www.ahkongdurian.com/):
   <img src="./img/ahgong.png">
   <!-- Please check for copyright conflicts! -->
+</details>
 
-### Workplan
-
-<u> Database </u>
+<h3>Workplan</h3>
+<u> **Database** </u>
 - [ ] read from CSV file to identify fams according to their telegram username
 - [ ] store selected images
 - [ ] write to CSV file for tracking fam scores
 
-<u> Telegram API </u>
+<u> **Telegram API** </u>
 - [ ] identify an image being sent and the user information
 - [ ] identify context and group images based on event/fam
 - [ ] create a response AI (bonus: use some singaporean speech generator)
 
-<u> Image Detection </u>
+<u> **Image Detection** </u>
 - [ ] facial recognition
 - [ ] similarity comparison to identify photos from the same event/activity
 - [ ] filter unrelated images (non fam outing/hangout type of images)
 - [ ] quality selection to find the best photo within a group of photos
 
-<u> Others </u>
+<u> **Others** </u>
 - [ ] error handling
 - [ ] testing
