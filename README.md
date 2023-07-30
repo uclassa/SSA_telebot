@@ -3,6 +3,9 @@ Telegram Bot for SSA
 
 ## User Guide
 > ⚠️ When adding bot to groups, bot must be promoted to admin in group setting
+
+## Requirements
+```pip install -r requirments.txt```
  
 ## Developer Details
 Currently hosted on https://www.pythonanywhere.com 
