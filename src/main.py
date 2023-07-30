@@ -21,6 +21,10 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Welcome to the Singapore Students Association at UCLA! I am Ah Gong, SSA's Telebot. We're excited to have you here. "
         "I provide useful information and updates for Singaporean students at UCLA.\n\n"
         "📢 Use /help to see a list of available commands and explore what I can do for you.\n\n"
+        "🌐 Connect with us online:\n"
+        "📸 Instagram: [@ucla.ssa](https://www.instagram.com/ucla.ssa/)\n"
+        "🎮 Discord: [Discord Invite Link](https://discord.gg/P7cjZXa92)\n"
+        "🌐 Website: [SSA Website](https://www.uclassa.org/)\n\n"
         "If you have any questions or need assistance, feel free to reach out. "
         "We're here to make your experience at UCLA as enjoyable as possible! 😊\n\n" 
     )
