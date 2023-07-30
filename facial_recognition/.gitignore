@@ -1,3 +1,4 @@
 image_collection/data/*
 image_collection/aug_data/*
+image_collection/logs/*
 image_collection/.ipynb_checkpoints/collection-checkpoint.ipynb
