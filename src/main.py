@@ -15,7 +15,17 @@ BOT_USERNAME: final = os.environ.get("BOT_USERNAME")
 # Commands
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Hello children ")
+    user = update.message.from_user
+    welcome_message = (
+        f"Hello {user.first_name}! 🇸🇬🎉\n\n"
+        "Welcome to the Singapore Students Association at UCLA! I am Ah Gong, SSA's Telebot. We're excited to have you here. "
+        "I provide useful information and updates for Singaporean students at UCLA.\n\n"
+        "📢 Use /help to see a list of available commands and explore what I can do for you.\n\n"
+        "If you have any questions or need assistance, feel free to reach out. "
+        "We're here to make your experience at UCLA as enjoyable as possible! 😊\n\n" 
+    )
+    
+    await update.message.reply_text(welcome_message)
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("What do you want")
