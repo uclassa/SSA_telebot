@@ -2,8 +2,8 @@ import os
 
 from typing import final
 from dotenv import load_dotenv
-from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
 
 # Load environment variables from ./../config/config.env
 dotenv_path = os.path.join(os.path.dirname(__file__), '..', 'config.env')
@@ -11,6 +11,23 @@ load_dotenv(dotenv_path)
 
 TOKEN: final = os.environ.get("TOKEN")
 BOT_USERNAME: final = os.environ.get("BOT_USERNAME")
+
+# Function to get upcoming events
+def get_upcoming_events() -> str:
+    # Implement your logic here to fetch upcoming events from your data source
+    # For example, you can query a database, scrape a website, etc.
+    # For this example, I'll just return a dummy response:
+    return "Here are the upcoming events:\n" \
+           "- 19 August: SSA Kickoff\n"
+
+# Function to get points information
+def get_points_info() -> str:
+    # Implement your logic here to fetch points information from your data source
+    # For example, you can query a database, calculate points, etc.
+    # For this example, I'll just return a dummy response:
+    return "SSA Fams Leaderboard\n" \
+           "1. Fam 1 - 100 points\n" \
+           "2. Fam 2 - 20 points\n"
 
 # Commands
 
@@ -21,15 +38,22 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Welcome to the Singapore Students Association at UCLA! I am Ah Gong, SSA's Telebot. We're excited to have you here. "
         "I provide useful information and updates for Singaporean students at UCLA.\n\n"
         "📢 Use /help to see a list of available commands and explore what I can do for you.\n\n"
-        "🌐 Connect with us online:\n"
-        "📸 Instagram: [@ucla.ssa](https://www.instagram.com/ucla.ssa/)\n"
-        "🎮 Discord: [Discord Invite Link](https://discord.gg/P7cjZXa92)\n"
-        "🌐 Website: [SSA Website](https://www.uclassa.org/)\n\n"
+        "Connect with us online:\n"
+        "📸 Instagram: [https://www.instagram.com/ucla.ssa/]\n"
+        "🎮 Discord: [https://discord.gg/P7cjZXa92]\n"
+        "🌐 Website: [https://www.uclassa.org/]\n\n"
         "If you have any questions or need assistance, feel free to reach out. "
         "We're here to make your experience at UCLA as enjoyable as possible! 😊\n\n" 
     )
-    
-    await update.message.reply_text(welcome_message)
+
+    # Create a menu with options
+    keyboard = [
+        [InlineKeyboardButton("Upcoming Events", callback_data="events")],
+        [InlineKeyboardButton("SSA Fams Leaderboard", callback_data="fam_points")],
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    await update.message.reply_text(welcome_message, reply_markup=reply_markup)
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("What do you want")
@@ -46,6 +70,12 @@ def handle_response(text: str) -> str:
     if "singapore" in processed_text:
         return "Majulah Singapura"
     
+    if "next event" in processed_text:
+        return get_upcoming_events()
+    
+    if "leaderboard" in processed_text:
+        return get_points_info()
+
     return "Ah Gong don't understand"
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -66,7 +96,21 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
     print("Bot: ", response)
     await update.message.reply_text(response)
+
+async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()  # Await the button click acknowledgement
     
+    option = query.data
+
+    # Based on the option selected, respond with a different message
+    if option == "events":
+        await query.message.reply_text(get_upcoming_events())
+    elif option == "fam_points":
+        await query.message.reply_text(get_points_info())
+    else:
+        await query.message.reply_text("Invalid option selected.")
+
 async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(f"Update {update} caused error {context.error}")
     
@@ -82,6 +126,9 @@ if __name__ == "__main__":
     
     # Messages
     app.add_handler(MessageHandler(filters.TEXT, handle_message))
+    
+    # Callbacks for menu button clicks
+    app.add_handler(CallbackQueryHandler(on_button_click))
     
     # Error
     app.add_error_handler(error)
