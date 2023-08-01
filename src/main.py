@@ -17,15 +17,18 @@ def get_upcoming_events() -> str:
     # Implement your logic here to fetch upcoming events from your data source
     # For example, you can query a database, scrape a website, etc.
     # For this example, I'll just return a dummy response:
-    return "Here are the upcoming events:\n" \
-           "- 19 August: SSA Kickoff\n"
+    return "--- Here are the upcoming events: ---\n" \
+           "- 19 August: SSA Kickoff, 4pm - 7pm, Fort Canning\n" \
+           "- 26 September: Enormous Acitivities Fair, 11pm - 3pm\n" 
+        #    "- 14 October: SSA Welcome/Family Reveal Event\n" 
+
 
 # Function to get points information
 def get_points_info() -> str:
     # Implement your logic here to fetch points information from your data source
     # For example, you can query a database, calculate points, etc.
     # For this example, I'll just return a dummy response:
-    return "SSA Fams Leaderboard\n" \
+    return "--- SSA Fams Leaderboard ---\n" \
            "1. Fam 1 - 100 points\n" \
            "2. Fam 2 - 20 points\n"
 
