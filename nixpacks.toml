@@ -1,2 +1,6 @@
 [phases.setup]
-nixPkgs = ['...', 'python3.10-python-telegram-bot', 'python3.10-python-dotenv']
+nixPkgs = ["...", "pip"]
+
+[phases.pip]
+cmds = ["pip install -r requirements.txt"]
+dependsOn = ["setup"]
