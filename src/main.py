@@ -74,4 +74,5 @@ if __name__ == "__main__":
     
     # Polls the bot for updates
     print("Bot is running...")
+    print(TOKEN[0:5])
     app.run_polling(poll_interval=3)

@@ -1,6 +1,0 @@
-[phases.setup]
-nixPkgs = ["...", "pip"]
-
-[phases.pip]
-cmds = ["pip install -r requirements.txt"]
-dependsOn = ["setup"]
