@@ -1,0 +1,2 @@
+[phases.setup]
+nixPkgs = ['...', 'python3.10-python-telegram-bot', 'python3.10-python-dotenv']
