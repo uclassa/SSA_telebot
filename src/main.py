@@ -11,6 +11,7 @@ load_dotenv(dotenv_path)
 
 TOKEN: final = os.environ.get("TOKEN")
 BOT_USERNAME: final = os.environ.get("BOT_USERNAME")
+ADMIN_GRP: final = os.environ.get("ADMIN_GRP")
 
 # Function to get upcoming events
 def get_upcoming_events() -> str:
@@ -30,18 +31,12 @@ def get_points_info() -> str:
            "1. Fam 1 - 100 points\n" \
            "2. Fam 2 - 20 points\n"
 
-# Function to handle feedback
-def handle_feedback() -> str:
-    # Implement your logic here to handle the feedback
-    # For this example, I'll just return a dummy response:
-    return "Thank you for your feedback! We value your input and will use it to improve our bot."
-
 # Function to create the menu with options
 def create_menu() -> InlineKeyboardMarkup:
     keyboard = [
         [InlineKeyboardButton("Upcoming Events", callback_data="events")],
         [InlineKeyboardButton("SSA Fams Leaderboard", callback_data="fam_points")],
-        [InlineKeyboardButton("Give Us Feedback!", callback_data="feedback")],
+        [InlineKeyboardButton("Bot Feedback", callback_data="feedback")],
     ]
     return InlineKeyboardMarkup(keyboard)
 
@@ -69,7 +64,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
     welcome_message = (
         f"Hello {user.first_name}! 🇸🇬🎉\n\n"
-        "Welcome to the Singapore Students Association at UCLA! I am Ah Gong, SSA's Telebot. We're excited to have you here. "
+        "Welcome to the Singapore Students Association at UCLA! I am Ah Gong, SSA's oldest honarary member and telebot. "
         "I provide useful information and updates for Singaporean students at UCLA.\n\n"
         "📢 Use /help to see a list of available commands and explore what I can do for you.\n\n"
         "Connect with us online:\n"
@@ -107,7 +102,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
           
     else:
-        response: str = handle_response(text)
+        # Check if the bot is waiting for user feedback
+        if context.user_data.get("state") == "waiting_for_feedback":
+            feedback = (f"Feedback From: ({update.message.chat.id})\n\n" 
+                    f"{text}\n")
+            # Send the feedback to another group (replace 'GROUP_ID' with the actual group ID)
+            await context.bot.send_message(chat_id=ADMIN_GRP, text=feedback)
+            response = "Thank you for your feedback! Ah Gong has sent your input to my grandchildren working on improving my services."
+            # Reset the state to None after handling the feedback
+            context.user_data["state"] = None
+        else:
+            response: str = handle_response(text)
         
     print("Bot: ", response)
     await update.message.reply_text(response)
@@ -126,7 +131,9 @@ async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif option == "fam_points":
         await query.message.reply_text(get_points_info())
     elif option == "feedback":
-        await query.message.reply_text(handle_feedback())
+        await query.message.reply_text("Tell us how we can improve this bot:")
+        # Set a new state using CallbackContext to indicate that we are waiting for user feedback
+        context.user_data["state"] = "waiting_for_feedback"
     else:
         await query.message.reply_text("Invalid option selected.")
 
