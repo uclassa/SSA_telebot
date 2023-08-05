@@ -19,9 +19,7 @@ def get_upcoming_events() -> str:
     # For this example, I'll just return a dummy response:
     return "--- Here are the upcoming events: ---\n" \
            "- 19 August: SSA Kickoff, 4pm - 7pm, Fort Canning\n" \
-           "- 26 September: Enormous Acitivities Fair, 11pm - 3pm\n" 
-        #    "- 14 October: SSA Welcome/Family Reveal Event\n" 
-
+           "- 26 September: Enormous Activities Fair, 11pm - 3pm\n"
 
 # Function to get points information
 def get_points_info() -> str:
@@ -32,11 +30,18 @@ def get_points_info() -> str:
            "1. Fam 1 - 100 points\n" \
            "2. Fam 2 - 20 points\n"
 
+# Function to handle feedback
+def handle_feedback() -> str:
+    # Implement your logic here to handle the feedback
+    # For this example, I'll just return a dummy response:
+    return "Thank you for your feedback! We value your input and will use it to improve our bot."
+
 # Function to create the menu with options
 def create_menu() -> InlineKeyboardMarkup:
     keyboard = [
         [InlineKeyboardButton("Upcoming Events", callback_data="events")],
         [InlineKeyboardButton("SSA Fams Leaderboard", callback_data="fam_points")],
+        [InlineKeyboardButton("Give Us Feedback!", callback_data="feedback")],
     ]
     return InlineKeyboardMarkup(keyboard)
 
@@ -46,13 +51,13 @@ def handle_response(text: str) -> str:
 
     if "hello" in processed_text:
         return "Selamat Pagi"
-    
+
     if "singapore" in processed_text:
         return "Majulah Singapura"
-    
+
     if "next event" in processed_text:
         return get_upcoming_events()
-    
+
     if "leaderboard" in processed_text:
         return get_points_info()
 
@@ -120,6 +125,8 @@ async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.reply_text(get_upcoming_events())
     elif option == "fam_points":
         await query.message.reply_text(get_points_info())
+    elif option == "feedback":
+        await query.message.reply_text(handle_feedback())
     else:
         await query.message.reply_text("Invalid option selected.")
 
