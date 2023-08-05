@@ -32,38 +32,15 @@ def get_points_info() -> str:
            "1. Fam 1 - 100 points\n" \
            "2. Fam 2 - 20 points\n"
 
-# Commands
-
-async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = update.message.from_user
-    welcome_message = (
-        f"Hello {user.first_name}! 🇸🇬🎉\n\n"
-        "Welcome to the Singapore Students Association at UCLA! I am Ah Gong, SSA's Telebot. We're excited to have you here. "
-        "I provide useful information and updates for Singaporean students at UCLA.\n\n"
-        "📢 Use /help to see a list of available commands and explore what I can do for you.\n\n"
-        "Connect with us online:\n"
-        "📸 Instagram: [https://www.instagram.com/ucla.ssa/]\n"
-        "🎮 Discord: [https://discord.gg/P7cjZXa92]\n"
-        "🌐 Website: [https://www.uclassa.org/]\n\n"
-        "If you have any questions or need assistance, feel free to reach out. "
-        "We're here to make your experience at UCLA as enjoyable as possible! 😊\n\n" 
-    )
-
-    # Create a menu with options
+# Function to create the menu with options
+def create_menu() -> InlineKeyboardMarkup:
     keyboard = [
         [InlineKeyboardButton("Upcoming Events", callback_data="events")],
         [InlineKeyboardButton("SSA Fams Leaderboard", callback_data="fam_points")],
     ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    return InlineKeyboardMarkup(keyboard)
 
-    await update.message.reply_text(welcome_message, reply_markup=reply_markup)
-
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("What do you want")
-
-# Responses
-# AI will go in here later on to process inputs
-
+# Function to process user inputs and return appropriate responses
 def handle_response(text: str) -> str:
     processed_text: str = text.lower()
 
@@ -80,6 +57,36 @@ def handle_response(text: str) -> str:
         return get_points_info()
 
     return "Ah Gong don't understand"
+
+# Command handlers
+
+async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.message.from_user
+    welcome_message = (
+        f"Hello {user.first_name}! 🇸🇬🎉\n\n"
+        "Welcome to the Singapore Students Association at UCLA! I am Ah Gong, SSA's Telebot. We're excited to have you here. "
+        "I provide useful information and updates for Singaporean students at UCLA.\n\n"
+        "📢 Use /help to see a list of available commands and explore what I can do for you.\n\n"
+        "Connect with us online:\n"
+        "📸 Instagram: [https://www.instagram.com/ucla.ssa/]\n"
+        "🎮 Discord: [https://discord.gg/P7cjZXa92]\n"
+        "🌐 Website: [https://www.uclassa.org/]\n\n"
+        "If you have any questions or need assistance, feel free to reach out. "
+        "We're here to make your experience at UCLA as enjoyable as possible! 😊\n\n" 
+    )
+
+    # Call the function to create the menu
+    reply_markup = create_menu()
+
+    await update.message.reply_text(welcome_message, reply_markup=reply_markup)
+
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # Call the function to create the menu
+    reply_markup = create_menu()
+
+    await update.message.reply_text("Here are our available menus:", reply_markup=reply_markup)
+
+# Message handler
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message_type: str = update.message.chat.type
@@ -100,6 +107,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print("Bot: ", response)
     await update.message.reply_text(response)
 
+# Callback query handler
+
 async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()  # Await the button click acknowledgement
@@ -114,10 +123,11 @@ async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await query.message.reply_text("Invalid option selected.")
 
+# Error handler
+
 async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(f"Update {update} caused error {context.error}")
-    
-    
+
 # Main
 
 if __name__ == "__main__":
