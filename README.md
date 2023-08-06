@@ -8,10 +8,10 @@ Telegram Bot for SSA
 ```pip install -r requirements.txt```
  
 ## Developer Details
-Currently hosted on https://www.pythonanywhere.com 
+Currently hosted on 🚅[Railway](https://railway.app/)
 
-- Bot name: SSA Ah Gong \
-- Bot username: uclassa_telebot \
+- Bot name: SSA Ah Gong
+- Bot username: uclassa_telebot
 - Bot description: As SSA's Ah Gong, I shall watch over SSA - tele channels and make people's lifes easier.
 - Check SSA google drive for the `config.env` file, copy and paste it in your local repo. The `.env` file should contain something like this:
   ```
