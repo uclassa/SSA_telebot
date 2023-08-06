@@ -9,7 +9,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 # If modifying these scopes, delete the file token.json.
-SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
+SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
 # The ID and range of a sample spreadsheet.
 SAMPLE_SPREADSHEET_ID = '1VnEjWWsUpr2Sp_Ifhp3Q2MHHeaZkBwzUsqwkHGZvlmk'
@@ -20,11 +20,13 @@ def main():
     """Shows basic usage of the Sheets API.
     Prints values from a sample spreadsheet.
     """
+    print(os.path.dirname(__file__))
     creds = None
     # The file token.json stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
     # time.
     if os.path.exists('token.json'):
+        print("token.json exists")
         creds = Credentials.from_authorized_user_file('token.json', SCOPES)
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
