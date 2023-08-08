@@ -50,7 +50,7 @@ class Members(Google_Sheets):
     
     
     def get(self):
-        print(self.values)
+        return(self.values)
 
 
 class Events(Google_Sheets):
@@ -58,8 +58,8 @@ class Events(Google_Sheets):
         super().__init__(range_name="Events")
         
         
-    def get(self, event_id=1):
-        print(self.values[event_id])
+    def get(self):
+        return(self.values)
 
 
 if __name__ == '__main__':

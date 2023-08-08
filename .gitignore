@@ -3,3 +3,4 @@
 config.env
 credentials.json
 token.json
+*.pyc

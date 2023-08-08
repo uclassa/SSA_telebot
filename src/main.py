@@ -5,22 +5,32 @@ from dotenv import load_dotenv
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
 
+APPLICATION_DIR = os.path.join(os.path.dirname(__file__), '..')
+
+import sys
+sys.path.append(APPLICATION_DIR)
+from backend.google_sheets import Members, Events
+
 # Load environment variables from ./../config/config.env
-dotenv_path = os.path.join(os.path.dirname(__file__), '..', 'config.env')
+dotenv_path = os.path.join(APPLICATION_DIR, 'config.env')
 load_dotenv(dotenv_path)
 
 TOKEN: final = os.environ.get("TOKEN")
 BOT_USERNAME: final = os.environ.get("BOT_USERNAME")
 
+events = Events()
+members = Members()
+
 # Function to get upcoming events
 def get_upcoming_events() -> str:
-    # Implement your logic here to fetch upcoming events from your data source
-    # For example, you can query a database, scrape a website, etc.
-    # For this example, I'll just return a dummy response:
-    return "--- Here are the upcoming events: ---\n" \
-           "- 19 August: SSA Kickoff, 4pm - 7pm, Fort Canning\n" \
-           "- 26 September: Enormous Acitivities Fair, 11pm - 3pm\n" 
-        #    "- 14 October: SSA Welcome/Family Reveal Event\n" 
+    results = events.get()
+    reply = "--- Here are the upcoming events: ---\n"
+    for key, value in results.items():
+        reply += str(value) + "\n"
+    return reply
+    # return "--- Here are the upcoming events: ---\n" \
+    #        "- 19 August: SSA Kickoff, 4pm - 7pm, Fort Canning\n" \
+    #        "- 26 September: Enormous Acitivities Fair, 11pm - 3pm\n" 
 
 
 # Function to get points information
