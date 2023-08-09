@@ -18,18 +18,25 @@ def get_upcoming_events() -> str:
     # Implement your logic here to fetch upcoming events from your data source
     # For example, you can query a database, scrape a website, etc.
     # For this example, I'll just return a dummy response:
-    return "--- Here are the upcoming events: ---\n" \
-           "- 19 August: SSA Kickoff, 4pm - 7pm, Fort Canning\n" \
-           "- 26 September: Enormous Activities Fair, 11pm - 3pm\n"
+    return ("🎈 Here are the upcoming events: 🎈\n" 
+           "- 19 August: SSA Kickoff, 4pm - 7pm, Fort Canning\n" 
+           "- 26 September: Enormous Activities Fair, 11pm - 3pm\n")
 
 # Function to get points information
 def get_points_info() -> str:
     # Implement your logic here to fetch points information from your data source
     # For example, you can query a database, calculate points, etc.
     # For this example, I'll just return a dummy response:
-    return "--- SSA Fams Leaderboard ---\n" \
-           "1. Fam 1 - 100 points\n" \
-           "2. Fam 2 - 20 points\n"
+    return ("🏅 SSA Fams Leaderboard 🏅\n" 
+           "1. Fam 1 - 100 points\n" 
+           "2. Fam 2 - 20 points\n")
+
+# Acknowledgements
+def get_acknowledgements() -> str:
+    return ("🧑‍💻 The Developers 🧑‍💻\n"
+            "- Kai Jun Tay C.O'25\n"
+            "- Matthew Ryan Teo C.O'25\n"
+            "- Pierce Chong C.O'25")
 
 # Function to create the menu with options
 def create_menu() -> InlineKeyboardMarkup:
@@ -37,6 +44,7 @@ def create_menu() -> InlineKeyboardMarkup:
         [InlineKeyboardButton("Upcoming Events", callback_data="events")],
         [InlineKeyboardButton("SSA Fams Leaderboard", callback_data="fam_points")],
         [InlineKeyboardButton("Bot Feedback", callback_data="feedback")],
+        [InlineKeyboardButton("Ah Gong's Supportive Grandchildren", callback_data="supportive_grandchildren")], 
     ]
     return InlineKeyboardMarkup(keyboard)
 
@@ -116,7 +124,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print("Bot: ", response)
     await update.message.reply_text(response)
 
-# Callback query handler
+# Menu Bottons
 async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()  # Await the button click acknowledgement
@@ -132,6 +140,8 @@ async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.reply_text("Tell us how we can improve this bot:")
         # Set a new state using CallbackContext to indicate that we are waiting for user feedback
         context.user_data["state"] = "waiting_for_feedback"
+    elif option == "supportive_grandchildren":  # New option
+        await query.message.reply_text(get_acknowledgements())  # New response
     else:
         await query.message.reply_text("Invalid option selected.")
 
