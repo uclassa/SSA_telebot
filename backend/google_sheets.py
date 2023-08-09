@@ -5,11 +5,20 @@ import re
 from abc import ABC, abstractmethod
 from typing import final
 from datetime import datetime
+from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from google.oauth2.credentials import Credentials
 
+
+# Load environment variables from ./../config/config.env
+APPLICATION_DIR = os.path.join(os.path.dirname(__file__), '..')
+dotenv_path = os.path.join(APPLICATION_DIR, 'config.env')
+load_dotenv(dotenv_path)
+
+SHEET_ID: final = os.environ.get("MASTER_SHEET")
 SCOPES: final = ['https://www.googleapis.com/auth/spreadsheets']
+
 
 class Google_Sheets(ABC):
     
@@ -18,9 +27,15 @@ class Google_Sheets(ABC):
         self.spreadsheet_id = spreadsheet_id
         self.range_name = range_name
         
-        if os.path.exists('token.json'):
-            creds = Credentials.from_authorized_user_file('token.json', SCOPES)
-        # pylint: disable=maybe-no-member
+        creds = Credentials.from_authorized_user_info(
+            info={
+                "refresh_token": os.environ.get('google_refresh_token'),
+                "client_id": os.environ.get('google_client_id'),
+                "client_secret": os.environ.get('google_client_secret'),
+                "token_uri": os.environ.get('google_token_uri'),
+            },
+            scopes=SCOPES
+        )
         
         try:
             service = build('sheets', 'v4', credentials=creds)
@@ -57,7 +72,7 @@ class Google_Sheets(ABC):
 
 
 class Members(Google_Sheets):
-    def __init__(self, sheet_id):
+    def __init__(self, sheet_id=SHEET_ID):
         super().__init__(spreadsheet_id=sheet_id, range_name="Members")
     
     
@@ -67,7 +82,7 @@ class Members(Google_Sheets):
 
 
 class Events(Google_Sheets):
-    def __init__(self, sheet_id):
+    def __init__(self, sheet_id=SHEET_ID):
         super().__init__(spreadsheet_id=sheet_id, range_name="Events")
         
         
@@ -112,10 +127,9 @@ class Events(Google_Sheets):
         return reply
 
 
-if __name__ == '__main__':
-    SHEET_ID="1VnEjWWsUpr2Sp_Ifhp3Q2MHHeaZkBwzUsqwkHGZvlmk"
-    members = Members(SHEET_ID)
-    events = Events(SHEET_ID)
-    members.get()
-    events.get()
-    print(events.generateReply())
+# if __name__ == '__main__':
+#     members = Members()
+#     events = Events()
+#     members.get()
+#     events.get()
+#     print(events.generateReply())
