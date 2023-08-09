@@ -3,7 +3,7 @@ import os
 from typing import final
 from dotenv import load_dotenv
 import pytz
-from datetime import time
+from datetime import datetime, time
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
 
@@ -21,7 +21,7 @@ TOKEN: final = os.environ.get("TOKEN")
 BOT_USERNAME: final = os.environ.get("BOT_USERNAME")
 ADMIN_GRP: final = os.environ.get("ADMIN_GRP")
 SHEET_ID: final = os.environ.get("MASTER_SHEET")
-sg_timezone = pytz.timezone('Asia/Singapore')
+sg_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
 REMINDER_TIME: final = time(8, 0, 0, tzinfo=sg_timezone)
 
 events = Events(SHEET_ID)
@@ -29,7 +29,10 @@ members = Members(SHEET_ID)
 
 
 async def event_reminder(context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(chat_id=ADMIN_GRP, text='One message every minute')
+    current_date = datetime.now(sg_timezone).date()
+    reminder = events.generateReminder(current_date)
+    if reminder:
+        await context.bot.send_message(chat_id=ADMIN_GRP, text=reminder)
     
 
 # Function to get upcoming events
@@ -171,7 +174,8 @@ async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
 if __name__ == "__main__":
     app = Application.builder().token(TOKEN).build()
     job_queue = app.job_queue
-    job_minute = job_queue.run_daily(event_reminder, REMINDER_TIME)
+    # job_minute = job_queue.run_once(event_reminder, 3)
+    remind_event = job_queue.run_daily(event_reminder, REMINDER_TIME)
     
     # Commands
     app.add_handler(CommandHandler("start", start_command))

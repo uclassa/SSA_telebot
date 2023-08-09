@@ -4,7 +4,7 @@ import os
 import re
 from abc import ABC, abstractmethod
 from typing import final
-from datetime import datetime
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -125,11 +125,31 @@ class Events(Google_Sheets):
             reply += value[5] + '\t'
             reply += '\n'
         return reply
+    
+    
+    def generateReminder(self, current_date):
+        self.refreshRead()
+        for _, value in self.values.items():
+            start_date = datetime.strptime(value[1], '%m/%d/%y').date()
+            timedelta = start_date - current_date
+            datedelta = timedelta.days
+            if datedelta > 0:
+                return (
+                    '❗Reminder❗\nThere\'s an event upcoming in ' 
+                    + str(datedelta) + ' days:\n'
+                    + value[0]                  # Event name
+                    + ' @ ' + value[5]          # Event location
+                    + ' on ' + value[1]         # Event start date
+                )
+        
+        # no upcoming event, return none and make bot not send anything
+        return None
 
 
-# if __name__ == '__main__':
-#     members = Members()
-#     events = Events()
-#     members.get()
-#     events.get()
-#     print(events.generateReply())
+if __name__ == '__main__':
+    members = Members()
+    events = Events()
+    members.get()
+    events.get()
+    # print(events.generateReply())
+    print(events.generateReminder(datetime.now().date()))
