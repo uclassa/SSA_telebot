@@ -100,7 +100,7 @@ class Events(Google_Sheets):
     
     def generateReply(self):
         self.refreshRead()
-        reply = "--- Here are the upcoming events: ---\n"
+        reply = '🎈 Here are the upcoming events 🎈\n'
         for _, value in self.values.items():
             # value: name, start_date, end_date, start_time, end_time, location
             reply += '- ' + value[0] + ': \t'
