@@ -174,7 +174,6 @@ async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
 if __name__ == "__main__":
     app = Application.builder().token(TOKEN).build()
     job_queue = app.job_queue
-    # job_minute = job_queue.run_once(event_reminder, 3)
     remind_event = job_queue.run_daily(event_reminder, REMINDER_TIME)
     
     # Commands

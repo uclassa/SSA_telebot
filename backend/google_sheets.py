@@ -133,7 +133,7 @@ class Events(Google_Sheets):
             start_date = datetime.strptime(value[1], '%m/%d/%y').date()
             timedelta = start_date - current_date
             datedelta = timedelta.days
-            if datedelta > 0:
+            if datedelta > 0 and datedelta == 7:
                 return (
                     '❗Reminder❗\nThere\'s an event upcoming in ' 
                     + str(datedelta) + ' days:\n'
