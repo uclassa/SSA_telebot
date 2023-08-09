@@ -17,12 +17,18 @@ Currently, functionalities of the bot are the same regardless of whether the cha
 ```pip install -r requirements.txt```
 
 ### Backend Details
-- `token.json` must be copied from the Google Drive to the local repo. Current token.json is configured with the following scopes:
-  ```
-  "scopes": ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/spreadsheets.readonly", "https://www.googleapis.com/auth/drive"]
-  ```
-  - If this doesn't work for some reason, copy `credentials.json` into the root folder, log in using SSA google account, then run `quickstart.py` to generate a new `token.json` file.
 
+(Skip to step 3 if you already have `token.json`)
+1. Copy `credentials.json` from Google Cloud Platform or the Google Drive 'Telebot' folder to the root folder of the repo. 
+2. Run `quickstart.py` in the `backend` folder to generate `token.json` in the root folder of the repo.
+3. Copy the following fields from the `token.json` into `config.env` and name them accordingly:
+    ```
+    "refresh_token": os.environ.get('google_refresh_token'),
+    "client_id": os.environ.get('google_client_id'),
+    "client_secret": os.environ.get('google_client_secret'),
+    "token_uri": os.environ.get('google_token_uri'),
+    ```
+This is support deployment on Railway where we set the environment variables manually.
 
 ### Workplan
 
