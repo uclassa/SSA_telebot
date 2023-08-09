@@ -17,6 +17,7 @@ load_dotenv(dotenv_path)
 
 TOKEN: final = os.environ.get("TOKEN")
 BOT_USERNAME: final = os.environ.get("BOT_USERNAME")
+ADMIN_GRP: final = os.environ.get("ADMIN_GRP")
 SHEET_ID: final = os.environ.get("MASTER_SHEET")
 
 events = Events(SHEET_ID)
@@ -33,17 +34,52 @@ def get_points_info() -> str:
     # Implement your logic here to fetch points information from your data source
     # For example, you can query a database, calculate points, etc.
     # For this example, I'll just return a dummy response:
-    return "--- SSA Fams Leaderboard ---\n" \
-           "1. Fam 1 - 100 points\n" \
-           "2. Fam 2 - 20 points\n"
+    return ("🏅 SSA Fams Leaderboard 🏅\n" 
+           "1. Fam 1 - 100 points\n" 
+           "2. Fam 2 - 20 points\n")
 
-# Commands
+# Acknowledgements
+def get_acknowledgements() -> str:
+    return ("🧑‍💻 The Developers 🧑‍💻\n"
+            "- Kai Jun Tay C.O'25\n"
+            "- Matthew Ryan Teo C.O'25\n"
+            "- Pierce Chong C.O'25")
+
+# Function to create the menu with options
+def create_menu() -> InlineKeyboardMarkup:
+    keyboard = [
+        [InlineKeyboardButton("Upcoming Events", callback_data="events")],
+        [InlineKeyboardButton("SSA Fams Leaderboard", callback_data="fam_points")],
+        [InlineKeyboardButton("Bot Feedback", callback_data="feedback")],
+        [InlineKeyboardButton("Ah Gong's Supportive Grandchildren", callback_data="supportive_grandchildren")], 
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+# Function to process user inputs and return appropriate responses
+def handle_response(text: str) -> str:
+    processed_text: str = text.lower()
+
+    if "hello" in processed_text:
+        return "Selamat Pagi"
+
+    if "singapore" in processed_text:
+        return "Majulah Singapura"
+
+    if "next event" in processed_text:
+        return get_upcoming_events()
+
+    if "leaderboard" in processed_text:
+        return get_points_info()
+
+    return "Ah Gong don't understand"
+
+# Command handlers
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
     welcome_message = (
         f"Hello {user.first_name}! 🇸🇬🎉\n\n"
-        "Welcome to the Singapore Students Association at UCLA! I am Ah Gong, SSA's Telebot. We're excited to have you here. "
+        "Welcome to the Singapore Students Association at UCLA! I am Ah Gong, SSA's oldest honarary member and telebot. "
         "I provide useful information and updates for Singaporean students at UCLA.\n\n"
         "📢 Use /help to see a list of available commands and explore what I can do for you.\n\n"
         "Connect with us online:\n"
@@ -54,38 +90,18 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "We're here to make your experience at UCLA as enjoyable as possible! 😊\n\n" 
     )
 
-    # Create a menu with options
-    keyboard = [
-        [InlineKeyboardButton("Upcoming Events", callback_data="events")],
-        [InlineKeyboardButton("SSA Fams Leaderboard", callback_data="fam_points")],
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    # Call the function to create the menu
+    reply_markup = create_menu()
 
     await update.message.reply_text(welcome_message, reply_markup=reply_markup)
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("What do you want")
+    # Call the function to create the menu
+    reply_markup = create_menu()
 
-# Responses
-# AI will go in here later on to process inputs
+    await update.message.reply_text("Here are our available menus:", reply_markup=reply_markup)
 
-def handle_response(text: str) -> str:
-    processed_text: str = text.lower()
-
-    if "hello" in processed_text:
-        return "Selamat Pagi"
-    
-    if "singapore" in processed_text:
-        return "Majulah Singapura"
-    
-    if "next event" in processed_text:
-        return get_upcoming_events()
-    
-    if "leaderboard" in processed_text:
-        return get_points_info()
-
-    return "Ah Gong don't understand"
-
+# Message handler
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message_type: str = update.message.chat.type
     text: str = update.message.text
@@ -100,11 +116,22 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
           
     else:
-        response: str = handle_response(text)
+        # Check if the bot is waiting for user feedback
+        if context.user_data.get("state") == "waiting_for_feedback":
+            feedback = (f"Feedback From: ({update.message.chat.id})\n\n" 
+                    f"{text}\n")
+            # Send the feedback to another group (replace 'GROUP_ID' with the actual group ID)
+            await context.bot.send_message(chat_id=ADMIN_GRP, text=feedback)
+            response = "Thank you for your feedback! Ah Gong has sent your input to my grandchildren working on improving my services."
+            # Reset the state to None after handling the feedback
+            context.user_data["state"] = None
+        else:
+            response: str = handle_response(text)
         
     print("Bot: ", response)
     await update.message.reply_text(response)
 
+# Menu Bottons
 async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()  # Await the button click acknowledgement
@@ -116,13 +143,20 @@ async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.reply_text(get_upcoming_events())
     elif option == "fam_points":
         await query.message.reply_text(get_points_info())
+    elif option == "feedback":
+        await query.message.reply_text("Tell us how we can improve this bot:")
+        # Set a new state using CallbackContext to indicate that we are waiting for user feedback
+        context.user_data["state"] = "waiting_for_feedback"
+    elif option == "supportive_grandchildren":  # New option
+        await query.message.reply_text(get_acknowledgements())  # New response
     else:
         await query.message.reply_text("Invalid option selected.")
 
+# Error handler
+
 async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(f"Update {update} caused error {context.error}")
-    
-    
+
 # Main
 
 if __name__ == "__main__":
