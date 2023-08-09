@@ -129,21 +129,22 @@ class Events(Google_Sheets):
     
     def generateReminder(self, current_date):
         self.refreshRead()
+        hasUpcomingEvent = False
+        reminder = '❗Reminder❗\nThere are events upcoming in 7 days:\n'
         for _, value in self.values.items():
             start_date = datetime.strptime(value[1], '%m/%d/%y').date()
             timedelta = start_date - current_date
             datedelta = timedelta.days
             if datedelta > 0 and datedelta == 7:
-                return (
-                    '❗Reminder❗\nThere\'s an event upcoming in ' 
-                    + str(datedelta) + ' days:\n'
-                    + value[0]                  # Event name
+                hasUpcomingEvent = True
+                reminder += ( value[0]          # Event name
                     + ' @ ' + value[5]          # Event location
                     + ' on ' + value[1]         # Event start date
+                    + '\n'
                 )
         
-        # no upcoming event, return none and make bot not send anything
-        return None
+        # if no upcoming event, return none and make bot not send anything
+        return reminder if hasUpcomingEvent else None
 
 
 class GroupIDs(Google_Sheets):
@@ -190,11 +191,11 @@ if __name__ == '__main__':
     # members = Members()
     # members.get()
     
-    # events = Events()
-    # events.get()
-    # print(events.generateReply())
-    # print(events.generateReminder(datetime.now().date()))
+    events = Events()
+    events.get()
+    print(events.generateReply())
+    print(events.generateReminder(datetime.now().date()))
     
-    group_ids = GroupIDs()
-    group_ids.addOrUpdateGroup(123456789, "Test Group")
+    # group_ids = GroupIDs()
+    # group_ids.addOrUpdateGroup(123456789, "Test Group")
     
