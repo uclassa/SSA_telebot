@@ -1,6 +1,7 @@
 from __future__ import print_function
 from abc import ABC, abstractmethod
 from typing import final
+from datetime import datetime
 import os
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -60,6 +61,38 @@ class Events(Google_Sheets):
         
     def get(self):
         return(self.values)
+    
+    
+    def parseDateTime(self, values):
+        start_date_raw, end_date_raw, start_time_raw, end_time_raw = values
+        input_time_format='%I:%M:%S %p'
+        output_time_short_format='%I%p'
+        output_time_full_format='%I:%M%p'
+        message = ''
+        
+        if not start_time_raw == '':
+            start_time = datetime.strptime(start_time_raw, input_time_format)
+            message += start_date_raw + ' ' + \
+                    (start_time.strftime(output_time_short_format) if start_time.minute == 0 else start_time.strftime(output_time_full_format))
+        if not end_time_raw == '':
+            end = datetime.strptime(end_time_raw, input_time_format)
+            message += ' - ' + end_date_raw + ' ' + \
+                    (end.strftime(output_time_short_format) if end.minute == 0 else end.strftime(output_time_full_format))
+        
+        return message
+    
+    
+    def generateReply(self):
+        reply = "--- Here are the upcoming events: ---\n"
+        for _, value in self.values.items():
+            # value: name, start_date, end_date, start_time, end_time, location
+            reply += '- ' + value[0] + ':\t'
+            parsedDateTime = self.parseDateTime(value[1:5])
+            if not parsedDateTime == '':
+                reply += parsedDateTime + ', \t'
+            reply += value[5] + '\t'
+            reply += '\n'
+        return reply
 
 
 if __name__ == '__main__':
@@ -67,3 +100,4 @@ if __name__ == '__main__':
     events = Events()
     members.get()
     events.get()
+    print(events.generateReply())

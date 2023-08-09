@@ -23,14 +23,8 @@ members = Members()
 
 # Function to get upcoming events
 def get_upcoming_events() -> str:
-    results = events.get()
-    reply = "--- Here are the upcoming events: ---\n"
-    for key, value in results.items():
-        reply += str(value) + "\n"
+    reply = events.generateReply()
     return reply
-    # return "--- Here are the upcoming events: ---\n" \
-    #        "- 19 August: SSA Kickoff, 4pm - 7pm, Fort Canning\n" \
-    #        "- 26 September: Enormous Acitivities Fair, 11pm - 3pm\n" 
 
 
 # Function to get points information
