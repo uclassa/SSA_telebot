@@ -146,10 +146,55 @@ class Events(Google_Sheets):
         return None
 
 
+class GroupIDs(Google_Sheets):
+    def __init__(self, sheet_id=SHEET_ID):
+        super().__init__(spreadsheet_id=sheet_id, range_name="Group IDs")
+    
+    
+    def get(self):
+        self.refreshRead()
+        return(self.values)
+    
+    
+    def addOrUpdateGroup(self, group_id, group_name):
+        self.refreshRead()
+        if not group_id in self.values:
+            # update the sheet with new id
+            self.values[group_id] = [group_name]
+            
+            try:
+                body = {
+                    'values': [[group_id, group_name]]
+                }
+                result = self.sheet_object.append(
+                    spreadsheetId=self.spreadsheet_id, 
+                    range=self.range_name, 
+                    valueInputOption='USER_ENTERED', 
+                    body=body
+                ).execute()
+            except HttpError as error:
+                print(f"An error occurred: {error}")
+                return
+        else:
+            # group_id already exists
+            # TODO: update the group name if it changed from what was known
+            pass
+    
+    
+    def getGroupIDs(self):
+        self.refreshRead()
+        return(self.values.keys())
+
+
 if __name__ == '__main__':
-    members = Members()
-    events = Events()
-    members.get()
-    events.get()
+    # members = Members()
+    # members.get()
+    
+    # events = Events()
+    # events.get()
     # print(events.generateReply())
-    print(events.generateReminder(datetime.now().date()))
+    # print(events.generateReminder(datetime.now().date()))
+    
+    group_ids = GroupIDs()
+    group_ids.addOrUpdateGroup(123456789, "Test Group")
+    

@@ -11,7 +11,7 @@ APPLICATION_DIR = os.path.join(os.path.dirname(__file__), '..')
 
 import sys
 sys.path.append(APPLICATION_DIR)
-from backend.google_sheets import Members, Events
+from backend.google_sheets import Members, Events, GroupIDs
 
 # Load environment variables from ./../config/config.env
 dotenv_path = os.path.join(APPLICATION_DIR, 'config.env')
@@ -26,13 +26,14 @@ REMINDER_TIME: final = time(8, 0, 0, tzinfo=sg_timezone)
 
 events = Events(SHEET_ID)
 members = Members(SHEET_ID)
-
+group_ids = GroupIDs(SHEET_ID)
 
 async def event_reminder(context: ContextTypes.DEFAULT_TYPE):
     current_date = datetime.now(sg_timezone).date()
     reminder = events.generateReminder(current_date)
     if reminder:
-        await context.bot.send_message(chat_id=ADMIN_GRP, text=reminder)
+        for chat_id in group_ids.getGroupIDs():
+            await context.bot.send_message(chat_id=chat_id, text=reminder)
     
 
 # Function to get upcoming events
@@ -88,6 +89,11 @@ def handle_response(text: str) -> str:
 # Command handlers
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.message.chat.type == 'group':
+        group_id = update.message.chat_id
+        group_name = update.message.chat.title
+        group_ids.addOrUpdateGroup(group_id, group_name)
+    
     user = update.message.from_user
     welcome_message = (
         f"Hello {user.first_name}! 🇸🇬🎉\n\n"
