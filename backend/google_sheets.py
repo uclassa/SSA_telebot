@@ -45,8 +45,8 @@ class Google_Sheets(ABC):
 
 
 class Members(Google_Sheets):
-    def __init__(self):
-        super().__init__(range_name="Members")
+    def __init__(self, sheet_id):
+        super().__init__(spreadsheet_id=sheet_id, range_name="Members")
     
     
     def get(self):
@@ -54,8 +54,8 @@ class Members(Google_Sheets):
 
 
 class Events(Google_Sheets):
-    def __init__(self):
-        super().__init__(range_name="Events")
+    def __init__(self, sheet_id):
+        super().__init__(spreadsheet_id=sheet_id, range_name="Events")
         
         
     def get(self):
@@ -95,8 +95,9 @@ class Events(Google_Sheets):
 
 
 if __name__ == '__main__':
-    members = Members()
-    events = Events()
+    SHEET_ID="1VnEjWWsUpr2Sp_Ifhp3Q2MHHeaZkBwzUsqwkHGZvlmk"
+    members = Members(SHEET_ID)
+    events = Events(SHEET_ID)
     members.get()
     events.get()
     print(events.generateReply())
