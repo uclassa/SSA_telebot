@@ -7,12 +7,11 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from google.oauth2.credentials import Credentials
 
-SHEET_ID = "1VnEjWWsUpr2Sp_Ifhp3Q2MHHeaZkBwzUsqwkHGZvlmk"
 SCOPES: final = ['https://www.googleapis.com/auth/spreadsheets']
 
 class Google_Sheets(ABC):
     
-    def __init__(self, spreadsheet_id=SHEET_ID, range_name="A:B"):
+    def __init__(self, spreadsheet_id, range_name="A:B"):
         creds = None
         if os.path.exists('token.json'):
             creds = Credentials.from_authorized_user_file('token.json', SCOPES)

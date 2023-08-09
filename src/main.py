@@ -17,9 +17,10 @@ load_dotenv(dotenv_path)
 
 TOKEN: final = os.environ.get("TOKEN")
 BOT_USERNAME: final = os.environ.get("BOT_USERNAME")
+SHEET_ID: final = os.environ.get("MASTER_SHEET")
 
-events = Events()
-members = Members()
+events = Events(spreadsheet_id=SHEET_ID)
+members = Members(spreadsheet_id=SHEET_ID)
 
 # Function to get upcoming events
 def get_upcoming_events() -> str:
