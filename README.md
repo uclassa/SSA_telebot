@@ -38,7 +38,7 @@ This is support deployment on Railway where we set the environment variables man
 - [ ] store selected images to Google Drive
 - [ ] write to Google Sheets file for tracking fam scores
 - [x] read event information from Google Sheets
-- [ ] send reminders if event is coming up in 7 days
+- [x] send reminders if event is coming up in 7 days (add Groups with the bot will be updated)
 
 <u> Telegram API </u>
 - [ ] identify an image being sent and the user information
