@@ -11,7 +11,7 @@ from googleapiclient.errors import HttpError
 from google.oauth2.credentials import Credentials
 
 
-# Load environment variables from ./../config/config.env
+# Load environment variables from ./../config.env
 APPLICATION_DIR = os.path.join(os.path.dirname(__file__), '..')
 dotenv_path = os.path.join(APPLICATION_DIR, 'config.env')
 load_dotenv(dotenv_path)

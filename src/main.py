@@ -11,7 +11,7 @@ import sys
 sys.path.append(APPLICATION_DIR)
 from backend.google_sheets import Members, Events
 
-# Load environment variables from ./../config/config.env
+# Load environment variables from ./../config.env
 dotenv_path = os.path.join(APPLICATION_DIR, 'config.env')
 load_dotenv(dotenv_path)
 

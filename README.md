@@ -18,17 +18,21 @@ Currently, functionalities of the bot are the same regardless of whether the cha
 
 ### Backend Details
 
-(Skip to step 3 if you already have `token.json`)
-1. Copy `credentials.json` from Google Cloud Platform or the Google Drive 'Telebot' folder to the root folder of the repo. 
-2. Run `quickstart.py` in the `backend` folder to generate `token.json` in the root folder of the repo.
+Follow these steps if you don't have a working config.env file or if some OAuth credentials are missing/expired/not working.
+
+(Skip to step 3 if you already have a working `token.json` generated from `quickstart.py`)
+1. Copy `credentials.json` from Google Cloud Platform or the Google Drive 'Telebot' folder to the root folder of the repo _(try placing it in the `backend` folder of the repo instead if the file can't be found in step 2)_. 
+2. Run `quickstart.py` in the `backend` folder to generate a `token.json`.
 3. Copy the following fields from the `token.json` into `config.env` and name them accordingly:
     ```
+    # EXAMPLE: "name in token.json": os.environ.get('name in config.env')
+
     "refresh_token": os.environ.get('google_refresh_token'),
     "client_id": os.environ.get('google_client_id'),
     "client_secret": os.environ.get('google_client_secret'),
     "token_uri": os.environ.get('google_token_uri'),
     ```
-This is support deployment on Railway where we set the environment variables manually.
+This is to support deployment on Railway where we have to set the environment variables manually.
 
 ### Workplan
 
