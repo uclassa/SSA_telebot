@@ -5,22 +5,29 @@ from dotenv import load_dotenv
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
 
-# Load environment variables from ./../config/config.env
-dotenv_path = os.path.join(os.path.dirname(__file__), '..', 'config.env')
+APPLICATION_DIR = os.path.join(os.path.dirname(__file__), '..')
+
+import sys
+sys.path.append(APPLICATION_DIR)
+from backend.google_sheets import Members, Events
+
+# Load environment variables from ./../config.env
+dotenv_path = os.path.join(APPLICATION_DIR, 'config.env')
 load_dotenv(dotenv_path)
 
 TOKEN: final = os.environ.get("TOKEN")
 BOT_USERNAME: final = os.environ.get("BOT_USERNAME")
 ADMIN_GRP: final = os.environ.get("ADMIN_GRP")
+SHEET_ID: final = os.environ.get("MASTER_SHEET")
+
+events = Events(SHEET_ID)
+members = Members(SHEET_ID)
 
 # Function to get upcoming events
 def get_upcoming_events() -> str:
-    # Implement your logic here to fetch upcoming events from your data source
-    # For example, you can query a database, scrape a website, etc.
-    # For this example, I'll just return a dummy response:
-    return ("🎈 Here are the upcoming events: 🎈\n" 
-           "- 19 August: SSA Kickoff, 4pm - 7pm, Fort Canning\n" 
-           "- 26 September: Enormous Activities Fair, 11pm - 3pm\n")
+    reply = events.generateReply()
+    return reply
+
 
 # Function to get points information
 def get_points_info() -> str:
@@ -133,7 +140,7 @@ async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Based on the option selected, respond with a different message
     if option == "events":
-        await query.message.reply_text(get_upcoming_events())
+        await query.message.reply_text(get_upcoming_events(), parse_mode="HTML")
     elif option == "fam_points":
         await query.message.reply_text(get_points_info())
     elif option == "feedback":
