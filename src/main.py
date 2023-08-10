@@ -140,7 +140,7 @@ async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Based on the option selected, respond with a different message
     if option == "events":
-        await query.message.reply_text(get_upcoming_events())
+        await query.message.reply_text(get_upcoming_events(), parse_mode="HTML")
     elif option == "fam_points":
         await query.message.reply_text(get_points_info())
     elif option == "feedback":

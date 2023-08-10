@@ -115,14 +115,13 @@ class Events(Google_Sheets):
     
     def generateReply(self):
         self.refreshRead()
-        reply = '🎈 Here are the upcoming events 🎈\n'
+        reply = '🎈 <u>Here are the upcoming events</u> 🎈\n\n'
         for _, value in self.values.items():
             # value: name, start_date, end_date, start_time, end_time, location
-            reply += '- ' + value[0] + ': \t'
+            reply += '<b>' + value[0] + '</b> @ ' + value[5] + '\n'
             parsedDateTime = self.parseDateTime(value[1:5])
             if not parsedDateTime == '':
-                reply += parsedDateTime + ', \t'
-            reply += value[5] + '\t'
+                reply += parsedDateTime + '\n'
             reply += '\n'
         return reply
 
