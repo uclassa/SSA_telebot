@@ -150,7 +150,7 @@ async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.reply_text(get_points_info())
     elif option == "feedback":
         await query.message.reply_text("📫 Tell us how we can improve this bot: \n\n"
-                                       "(your feedback is anonymous)\n")
+                                       "(your feedback is anonymous)")
         # Set a new state using CallbackContext to indicate that we are waiting for user feedback
         context.user_data["state"] = "waiting_for_feedback"
     elif option == "supportive_grandchildren":  # New option
