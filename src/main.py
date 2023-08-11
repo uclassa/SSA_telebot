@@ -141,7 +141,7 @@ async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.user_data.get("state") == "waiting_for_feedback":
         # Reset the feedback state
         context.user_data["state"] = None
-        await query.message.reply_text("📫 Exiting Feedback Mode...")
+        await query.message.reply_text("📫 No feedback received, we'd love to hear from you anytime!")
 
     # Based on the option selected, respond with a different message
     if option == "events":
@@ -149,8 +149,7 @@ async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif option == "fam_points":
         await query.message.reply_text(get_points_info())
     elif option == "feedback":
-        await query.message.reply_text("📫 Entering Feedback Mode... \n\n"
-                                       "Tell Ah Gong how to improve this bot:\n\n"
+        await query.message.reply_text("📫 Tell us how we can improve this bot: \n\n"
                                        "(your feedback is anonymous)\n")
         # Set a new state using CallbackContext to indicate that we are waiting for user feedback
         context.user_data["state"] = "waiting_for_feedback"
