@@ -5,6 +5,8 @@ Telegram Bot for SSA
 > ⚠️ When adding bot to groups, bot must be promoted to admin in group setting
 Currently, functionalities of the bot are the same regardless of whether the chat is a direct message or in a group. However, to interact with the bot in a group chat, you must call the bot with `@uclassa_telebot`.
 
+Groups will be added to the list of known group IDs only when `/start` command is called in the group that the bot is in. **Only known groups will receive announcement broadcasts.**
+
 ## Developer Notes
 
 - Bot name: SSA Ah Gong \
@@ -42,7 +44,8 @@ This is to support deployment on Railway where we have to set the environment va
 - [ ] store selected images to Google Drive
 - [ ] write to Google Sheets file for tracking fam scores
 - [x] read event information from Google Sheets
-- [ ] send reminders if event is coming up in 7 days
+- [x] send reminders if event is coming up in 5 days (add Groups with the bot will be updated)
+- [x] added const.yml to store constants
 
 <u> Telegram API </u>
 - [ ] identify an image being sent and the user information
@@ -58,3 +61,4 @@ This is to support deployment on Railway where we have to set the environment va
 <u> Others </u>
 - [ ] error handling
 - [ ] testing
+- [ ] time zone based on event location or based on user location
