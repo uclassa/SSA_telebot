@@ -12,7 +12,7 @@ from googleapiclient.errors import HttpError
 from google.oauth2.credentials import Credentials
 
 
-# Load environment variables from ./../config/config.env
+# Load environment variables from ./../config.env
 APPLICATION_DIR = os.path.join(os.path.dirname(__file__), '..')
 dotenv_path = os.path.join(APPLICATION_DIR, 'config.env')
 load_dotenv(dotenv_path)
@@ -121,16 +121,15 @@ class Events(Google_Sheets):
     
     def generateReply(self, current_date):
         self.refreshRead()
-        reply = '🎈 Here are the upcoming events 🎈\n'
+        reply = '🎈 <u>Here are the upcoming events</u> 🎈\n\n'
         count = 0
         for _, value in self.values.items():
             # value: name, start_date, end_date, start_time, end_time, location
             if self.getDayDiff(current_date, value[1]) > 0:
-                reply += '- ' + value[0] + ': \t'
+                reply += '<b>' + value[0] + '</b> @ ' + value[5] + '\n'
                 parsedDateTime = self.parseDateTime(value[1:5])
                 if not parsedDateTime == '':
-                    reply += parsedDateTime + ', \t'
-                reply += value[5] + '\t'
+                    reply += parsedDateTime + '\n'
                 reply += '\n'
                 count += 1
                 

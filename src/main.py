@@ -13,7 +13,7 @@ import sys
 sys.path.append(APPLICATION_DIR)
 from backend.google_sheets import Members, Events, GroupIDs
 
-# Load environment variables from ./../config/config.env
+# Load environment variables from ./../config.env
 dotenv_path = os.path.join(APPLICATION_DIR, 'config.env')
 load_dotenv(dotenv_path)
 
@@ -158,7 +158,7 @@ async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Based on the option selected, respond with a different message
     if option == "events":
-        await query.message.reply_text(get_upcoming_events())
+        await query.message.reply_text(get_upcoming_events(), parse_mode="HTML")
     elif option == "fam_points":
         await query.message.reply_text(get_points_info())
     elif option == "feedback":
