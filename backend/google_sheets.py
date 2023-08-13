@@ -193,7 +193,7 @@ class Events(Google_Sheets):
         reminder = f'❗Reminder❗\nThere are events upcoming in {DAY_CUTOFF} days:\n'
         for _, value in self.values.items():
             day_diff = self.getDayDiff(value[1])
-            if day_diff > 0 and day_diff == DAY_CUTOFF:
+            if day_diff >= 0 and day_diff == DAY_CUTOFF:
                 hasUpcomingEvent = True
                 reminder += ( value[0]          # Event name
                     + ' @ ' + value[5]          # Event location
