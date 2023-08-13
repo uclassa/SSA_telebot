@@ -2,6 +2,8 @@ import os
 
 from typing import final
 from dotenv import load_dotenv
+import pytz
+from datetime import datetime, time
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
 
@@ -9,7 +11,7 @@ APPLICATION_DIR = os.path.join(os.path.dirname(__file__), '..')
 
 import sys
 sys.path.append(APPLICATION_DIR)
-from backend.google_sheets import Members, Events
+from backend.google_sheets import Members, Events, GroupIDs
 
 # Load environment variables from ./../config.env
 dotenv_path = os.path.join(APPLICATION_DIR, 'config.env')
@@ -19,13 +21,24 @@ TOKEN: final = os.environ.get("TOKEN")
 BOT_USERNAME: final = os.environ.get("BOT_USERNAME")
 ADMIN_GRP: final = os.environ.get("ADMIN_GRP")
 SHEET_ID: final = os.environ.get("MASTER_SHEET")
+sg_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
+REMINDER_TIME: final = time(8, 0, 0, tzinfo=sg_timezone)
 
 events = Events(SHEET_ID)
 members = Members(SHEET_ID)
+group_ids = GroupIDs(SHEET_ID)
+current_date = datetime.now(sg_timezone).date()
+
+async def event_reminder(context: ContextTypes.DEFAULT_TYPE):
+    reminder = events.generateReminder(current_date)
+    if reminder:
+        for chat_id in group_ids.getGroupIDs():
+            await context.bot.send_message(chat_id=chat_id, text=reminder)
+    
 
 # Function to get upcoming events
 def get_upcoming_events() -> str:
-    reply = events.generateReply()
+    reply = events.generateReply(current_date)
     return reply
 
 
@@ -76,6 +89,11 @@ def handle_response(text: str) -> str:
 # Command handlers
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.message.chat.type == 'group':
+        group_id = update.message.chat_id
+        group_name = update.message.chat.title
+        group_ids.addOrUpdateGroup(group_id, group_name)
+    
     user = update.message.from_user
     welcome_message = (
         f"Hello {user.first_name}! 🇸🇬🎉\n\n"
@@ -161,6 +179,8 @@ async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 if __name__ == "__main__":
     app = Application.builder().token(TOKEN).build()
+    job_queue = app.job_queue
+    remind_event = job_queue.run_daily(event_reminder, REMINDER_TIME)
     
     # Commands
     app.add_handler(CommandHandler("start", start_command))
@@ -178,3 +198,4 @@ if __name__ == "__main__":
     # Polls the bot for updates
     print("Bot is running...")
     app.run_polling(poll_interval=3)
+    

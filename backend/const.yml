@@ -1,0 +1,5 @@
+API:
+  SCOPES: ['https://www.googleapis.com/auth/spreadsheets']
+
+MAX_EVENTS: 3
+DAY_CUTOFF: 5
