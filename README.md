@@ -44,7 +44,8 @@ This is to support deployment on Railway where we have to set the environment va
 - [ ] store selected images to Google Drive
 - [ ] write to Google Sheets file for tracking fam scores
 - [x] read event information from Google Sheets
-- [x] send reminders if event is coming up in 7 days (add Groups with the bot will be updated)
+- [x] send reminders if event is coming up in 5 days (add Groups with the bot will be updated)
+- [x] added const.yml to store constants
 
 <u> Telegram API </u>
 - [ ] identify an image being sent and the user information
