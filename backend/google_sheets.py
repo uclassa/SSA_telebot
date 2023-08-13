@@ -206,7 +206,14 @@ class Events(Google_Sheets):
 
 
 class GroupIDs(Google_Sheets):
-    def __init__(self, sheet_id=SHEET_ID):
+    def __init__(self, sheet_id=SHEET_ID, dev_mode=False):
+        """Initialize GroupIDs object
+
+        Args:
+            sheet_id (str, optional): id of the spreadsheet. Defaults to SHEET_ID.
+            dev_mode (bool, optional): determines the list of id to return. Defaults to False.
+        """
+        self.dev_mode = dev_mode
         super().__init__(spreadsheet_id=sheet_id, range_name="Group IDs")
     
     
@@ -250,21 +257,24 @@ class GroupIDs(Google_Sheets):
     
     def getGroupIDs(self):
         """Returns the list of group_id in the sheet
+        If dev_mode is True, return the first group_id in the sheet (dev group)
+        Else return the rest of the group_id in the sheet (prod groups)
         
         Returns:
             list: list of group_id in the sheet
         """
         self.refreshRead()
-        return(self.values.keys())
+        group_ids = list(self.values.keys())
+        return(group_ids[0] if self.dev_mode else group_ids[1:])
 
 
 # if __name__ == '__main__':
-#     members = Members()
-#     members.get()
-#     events = Events()
-#     events.get()
-#     print(events.generateReply())
-#     print(events.generateReminder())
-#    group_ids = GroupIDs()
-#    group_ids.addOrUpdateGroup(123456789, "Test Group")
+    # members = Members()
+    # members.get()
+    # events = Events()
+    # events.get()
+    # print(events.generateReply())
+    # print(events.generateReminder())
+    # group_ids = GroupIDs(dev_mode=True)
+    # print(group_ids.getGroupIDs())
     
