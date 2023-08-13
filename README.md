@@ -56,3 +56,4 @@ This is support deployment on Railway where we set the environment variables man
 <u> Others </u>
 - [ ] error handling
 - [ ] testing
+- [ ] time zone based on event location or based on user location

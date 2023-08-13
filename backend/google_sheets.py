@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import os
 import re
+import yaml
 from abc import ABC, abstractmethod
 from typing import final
 from datetime import datetime, timedelta
@@ -17,8 +18,13 @@ dotenv_path = os.path.join(APPLICATION_DIR, 'config.env')
 load_dotenv(dotenv_path)
 
 SHEET_ID: final = os.environ.get("MASTER_SHEET")
-SCOPES: final = ['https://www.googleapis.com/auth/spreadsheets']
+os.chdir(os.path.dirname(__file__))
+with open('const.yml', 'r') as file:
+    constants = yaml.safe_load(file)
 
+SCOPES: final = constants['API']['SCOPES']
+MAX_EVENTS: final = constants['MAX_EVENTS']
+DAY_CUTOFF: final = constants['DAY_CUTOFF']
 
 class Google_Sheets(ABC):
     
@@ -113,29 +119,40 @@ class Events(Google_Sheets):
         return message
     
     
-    def generateReply(self):
+    def generateReply(self, current_date):
         self.refreshRead()
         reply = '🎈 Here are the upcoming events 🎈\n'
+        count = 0
         for _, value in self.values.items():
             # value: name, start_date, end_date, start_time, end_time, location
-            reply += '- ' + value[0] + ': \t'
-            parsedDateTime = self.parseDateTime(value[1:5])
-            if not parsedDateTime == '':
-                reply += parsedDateTime + ', \t'
-            reply += value[5] + '\t'
-            reply += '\n'
+            if self.getDayDiff(current_date, value[1]) > 0:
+                reply += '- ' + value[0] + ': \t'
+                parsedDateTime = self.parseDateTime(value[1:5])
+                if not parsedDateTime == '':
+                    reply += parsedDateTime + ', \t'
+                reply += value[5] + '\t'
+                reply += '\n'
+                count += 1
+                
+            if count >= MAX_EVENTS:
+                break
         return reply
+    
+    
+    def getDayDiff(self, current_date, start_date_str):
+        start_date = datetime.strptime(start_date_str, '%m/%d/%y').date()
+        timedelta = start_date - current_date
+        datedelta = timedelta.days
+        return datedelta
     
     
     def generateReminder(self, current_date):
         self.refreshRead()
         hasUpcomingEvent = False
-        reminder = '❗Reminder❗\nThere are events upcoming in 7 days:\n'
+        reminder = f'❗Reminder❗\nThere are events upcoming in {DAY_CUTOFF} days:\n'
         for _, value in self.values.items():
-            start_date = datetime.strptime(value[1], '%m/%d/%y').date()
-            timedelta = start_date - current_date
-            datedelta = timedelta.days
-            if datedelta > 0 and datedelta == 7:
+            day_diff = self.getDayDiff(current_date, value[1])
+            if day_diff > 0 and day_diff == DAY_CUTOFF:
                 hasUpcomingEvent = True
                 reminder += ( value[0]          # Event name
                     + ' @ ' + value[5]          # Event location
@@ -187,15 +204,13 @@ class GroupIDs(Google_Sheets):
         return(self.values.keys())
 
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
     # members = Members()
     # members.get()
-    
-    events = Events()
-    events.get()
-    print(events.generateReply())
-    print(events.generateReminder(datetime.now().date()))
-    
+    # events = Events()
+    # events.get()
+    # print(events.generateReply(datetime.now().date()))
+    # print(events.generateReminder(datetime.now().date()))
     # group_ids = GroupIDs()
     # group_ids.addOrUpdateGroup(123456789, "Test Group")
     

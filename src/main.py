@@ -27,9 +27,9 @@ REMINDER_TIME: final = time(8, 0, 0, tzinfo=sg_timezone)
 events = Events(SHEET_ID)
 members = Members(SHEET_ID)
 group_ids = GroupIDs(SHEET_ID)
+current_date = datetime.now(sg_timezone).date()
 
 async def event_reminder(context: ContextTypes.DEFAULT_TYPE):
-    current_date = datetime.now(sg_timezone).date()
     reminder = events.generateReminder(current_date)
     if reminder:
         for chat_id in group_ids.getGroupIDs():
@@ -38,7 +38,7 @@ async def event_reminder(context: ContextTypes.DEFAULT_TYPE):
 
 # Function to get upcoming events
 def get_upcoming_events() -> str:
-    reply = events.generateReply()
+    reply = events.generateReply(current_date)
     return reply
 
 
