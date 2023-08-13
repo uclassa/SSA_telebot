@@ -29,6 +29,17 @@ DAY_CUTOFF: final = constants['DAY_CUTOFF']
 class Google_Sheets(ABC):
     
     def __init__(self, spreadsheet_id, range_name="A:B"):
+        """Interface for Google Sheets API. Create a subclass to implement methods needed for each sheet.
+
+        Args:
+            spreadsheet_id (str): id of the spreadsheet
+            range_name (str, optional): name of the sheet. Defaults to "A:B".
+
+        Raises:
+            ValueError: [description]
+            HttpError: [description]
+        """
+        
         creds = None
         self.spreadsheet_id = spreadsheet_id
         self.range_name = range_name
@@ -66,6 +77,8 @@ class Google_Sheets(ABC):
         
         
     def refreshRead(self):
+        """Must be called before every read operation to refresh the values stored in the object.
+        """
         result = self.sheet_object.get(spreadsheetId=self.spreadsheet_id, range=self.range_name).execute()
         rows = result.get('values', [])
         for row in rows[1:]:
@@ -88,8 +101,9 @@ class Members(Google_Sheets):
 
 
 class Events(Google_Sheets):
-    def __init__(self, sheet_id=SHEET_ID):
+    def __init__(self, sheet_id=SHEET_ID, current_date=datetime.now().date()):
         super().__init__(spreadsheet_id=sheet_id, range_name="Events")
+        self.current_date = current_date
         
         
     def get(self):
@@ -98,6 +112,15 @@ class Events(Google_Sheets):
     
     
     def parseDateTime(self, values):
+        """AI is creating summary for parseDateTime
+        
+
+        Args:
+            values (list): cell values from the sheet (name, start_date, end_date, start_time, end_time, location)
+
+        Returns:
+            str: message to be displayed as "START_DATE START_TIME - END_DATE END_TIME"
+        """
         start_date_raw, end_date_raw, start_time_raw, end_time_raw = values
         input_time_format='%I:%M:%S %p'
         output_time_short_format='%I%p'
@@ -119,13 +142,19 @@ class Events(Google_Sheets):
         return message
     
     
-    def generateReply(self, current_date):
+    def generateReply(self):
+        """Prints up to MAX_EVENTS no. of upcoming events
+
+        Args:
+
+        Returns:
+            str: message to be displayed by the bot
+        """
         self.refreshRead()
         reply = '🎈 <u>Here are the upcoming events</u> 🎈\n\n'
         count = 0
         for _, value in self.values.items():
-            # value: name, start_date, end_date, start_time, end_time, location
-            if self.getDayDiff(current_date, value[1]) > 0:
+            if self.getDayDiff(value[1]) > 0:
                 reply += '<b>' + value[0] + '</b> @ ' + value[5] + '\n'
                 parsedDateTime = self.parseDateTime(value[1:5])
                 if not parsedDateTime == '':
@@ -138,19 +167,32 @@ class Events(Google_Sheets):
         return reply
     
     
-    def getDayDiff(self, current_date, start_date_str):
+    def getDayDiff(self, start_date_str):
+        """Returns the number of days between current_date and start_date_str
+
+        Args:
+            start_date_str (datetime): [description]
+
+        Returns:
+            int: no. of days between current_date and start_date_str
+        """
         start_date = datetime.strptime(start_date_str, '%m/%d/%y').date()
-        timedelta = start_date - current_date
+        timedelta = start_date - self.current_date
         datedelta = timedelta.days
         return datedelta
     
     
-    def generateReminder(self, current_date):
+    def generateReminder(self):
+        """Prints events that are upcoming in DAY_CUTOFF days
+
+        Returns:
+            str: message to be displayed by the bot
+        """
         self.refreshRead()
         hasUpcomingEvent = False
         reminder = f'❗Reminder❗\nThere are events upcoming in {DAY_CUTOFF} days:\n'
         for _, value in self.values.items():
-            day_diff = self.getDayDiff(current_date, value[1])
+            day_diff = self.getDayDiff(value[1])
             if day_diff > 0 and day_diff == DAY_CUTOFF:
                 hasUpcomingEvent = True
                 reminder += ( value[0]          # Event name
@@ -174,6 +216,14 @@ class GroupIDs(Google_Sheets):
     
     
     def addOrUpdateGroup(self, group_id, group_name):
+        """Checks if this group_id already exists in the sheet. 
+        If not, add it to the sheet. 
+        TODO: If yes, update the group name if it changed from what was known.
+
+        Args:
+            group_id (str): id of telegram group
+            group_name (str): name of telegram group
+        """
         self.refreshRead()
         if not group_id in self.values:
             # update the sheet with new id
@@ -199,17 +249,22 @@ class GroupIDs(Google_Sheets):
     
     
     def getGroupIDs(self):
+        """Returns the list of group_id in the sheet
+        
+        Returns:
+            list: list of group_id in the sheet
+        """
         self.refreshRead()
         return(self.values.keys())
 
 
 # if __name__ == '__main__':
-    # members = Members()
-    # members.get()
-    # events = Events()
-    # events.get()
-    # print(events.generateReply(datetime.now().date()))
-    # print(events.generateReminder(datetime.now().date()))
-    # group_ids = GroupIDs()
-    # group_ids.addOrUpdateGroup(123456789, "Test Group")
+#     members = Members()
+#     members.get()
+#     events = Events()
+#     events.get()
+#     print(events.generateReply())
+#     print(events.generateReminder())
+#    group_ids = GroupIDs()
+#    group_ids.addOrUpdateGroup(123456789, "Test Group")
     
