@@ -1,5 +1,12 @@
-from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
+import os
+import sys
+
+from telegram import Update, InlineKeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import ConversationHandler, CallbackContext
+
+APPLICATION_DIR = os.path.join(os.path.dirname(__file__), '..')
+sys.path.append(APPLICATION_DIR)
+from backend.google_sheets import Members
 
 class ProfileSetup:
     """
@@ -7,13 +14,20 @@ class ProfileSetup:
     """
 
     def __init__(self):
-        self.FIRST_NAME, self.LAST_NAME, self.CLASS, self.MAJOR, self.BIRTHDAY_DAY, self.BIRTHDAY_MONTH, self.BIRTHDAY_YEAR, self.PHOTO = range(8)
+        self.FIRST_NAME, self.LAST_NAME, self.YEAR, self.MAJOR, self.BIRTHDAY_DAY, self.BIRTHDAY_MONTH, self.BIRTHDAY_YEAR, self.PHOTO = range(8)
+        self.members_db = Members()
 
     async def start(self, update: Update, context: CallbackContext) -> int:
         """
         Starts the profile setup conversation. 
         Asks for the user's first name then returns the integer representing the next state.
         """
+        user_id = update.message.from_user.id
+        if self.members_db.is_member(user_id):
+            await update.message.reply_text("You already have a profile! You can update it with /update_profile.")
+            return ConversationHandler.END
+        
+        context.user_data['user_id'] = user_id
         await update.message.reply_text("Let's set up your profile! What's your first name?")
         return self.FIRST_NAME
 
@@ -29,23 +43,23 @@ class ProfileSetup:
     async def save_last_name(self, update: Update, context: CallbackContext) -> int:
         '''
         Stores the user's last name in the context dictionary.
-        Asks for the user's class then creates a ReplyKeyboardMarkup containing valid options.
+        Asks for the user's year then creates a ReplyKeyboardMarkup containing valid options.
         '''
         context.user_data['last_name'] = update.message.text
-        class_options = ["C.O '24", "C.O '25", "C.O '26", "C.O '27", "Master's", "PhD"]
+        year_options = ["C.O '24", "C.O '25", "C.O '26", "C.O '27", "Master's", "PhD"]
         
-        # Create a list of InlineKeyboardButtons for each class option
-        class_buttons = [[InlineKeyboardButton(option, callback_data=option)] for option in class_options]
+        # Create a list of InlineKeyboardButtons for each year option
+        year_buttons = [[InlineKeyboardButton(option, callback_data=option)] for option in year_options]
 
-        await update.message.reply_text(f"Cool! What is your class?", reply_markup=ReplyKeyboardMarkup(class_buttons, one_time_keyboard=True))
-        return self.CLASS
+        await update.message.reply_text(f"Cool! What is your class?", reply_markup=ReplyKeyboardMarkup(year_buttons, one_time_keyboard=True))
+        return self.YEAR
 
-    async def save_class(self, update: Update, context: CallbackContext) -> int:
+    async def save_year(self, update: Update, context: CallbackContext) -> int:
         '''
-        Stores the user's class in the context dictionary.
+        Stores the user's year in the context dictionary.
         Asks for the user's major then returns the integer representing the next state.
         '''
-        context.user_data['class'] = update.message.text
+        context.user_data['year'] = update.message.text
         await update.message.reply_text("Nice! What do you study?")
         return self.MAJOR
 
@@ -94,27 +108,35 @@ class ProfileSetup:
     async def save_photo(self, update: Update, context: CallbackContext) -> int:
         photo_file = await update.message.photo[-1].get_file()
         await photo_file.download_to_drive(f'{update.message.from_user.id}.jpg')
-        await self._store_profile_in_database(context.user_data)
+
+        await self._store_profile_in_database(update, context.user_data)
+        await update.message.reply_text(
+            f"Looking good! Profile setup has been completed. Thank you {context.user_data['first_name']}!"
+        )
+
         return ConversationHandler.END
 
     async def cancel(self, update: Update) -> int:
-        await update.message.reply_text("Profile setup canceled.")
+        await update.message.reply_text("Profile setup canceled, Ah Gong never remember any info. Ttyl bestie.")
         return ConversationHandler.END
         
     async def skip_photo(update: Update, context: CallbackContext) -> int:
         """
         Skips photo upload and ends the conversation instead.
         """
+        await self._store_profile_in_database(update, context.user_data)
         await update.message.reply_text(
-            f"I bet you look great! Profile setup has been completed. Thank you {context.user_data['first_name']}!"
+            f"I bet you look great! Profile setup has been completed. Thanks {context.user_data['first_name']}!"
         )
-        await self._store_profile_in_database(context.user_data)
 
         return ConversationHandler.END
 
-    async def _store_profile_in_database(self, profile_data):
-        # TODO: Implement your storage logic here
-        print(profile_data)
-
+    async def _store_profile_in_database(self, update, profile_data):
+        try:
+            self.members_db.add_member(profile_data)
+        except Exception as e:
+            print(e)
+            await update.message.reply_text("Something went wrong, please try again later.")
+            return ConversationHandler.END
 
 

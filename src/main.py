@@ -9,10 +9,10 @@ from datetime import datetime, time
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import ConversationHandler, Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
 from profiles import ProfileSetup
-# from backend.google_sheets import Members, Events, GroupIDs
 
 APPLICATION_DIR = os.path.join(os.path.dirname(__file__), '..')
 sys.path.append(APPLICATION_DIR)
+from backend.google_sheets import Members, Events, GroupIDs
 
 # Load environment variables from ./../config.env
 dotenv_path = os.path.join(APPLICATION_DIR, 'config.env')
@@ -25,9 +25,9 @@ SHEET_ID: final = os.environ.get("MASTER_SHEET")
 sg_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
 REMINDER_TIME: final = time(8, 0, 0, tzinfo=sg_timezone)
 
-# events = Events(SHEET_ID, current_date=datetime.now(sg_timezone).date())
-# members = Members(SHEET_ID)
-# group_ids = GroupIDs(SHEET_ID, dev_mode=False)
+events = Events(SHEET_ID, current_date=datetime.now(sg_timezone).date())
+members = Members(SHEET_ID)
+group_ids = GroupIDs(SHEET_ID, dev_mode=False)
 
 async def event_reminder(context: ContextTypes.DEFAULT_TYPE):
     reminder = events.generateReminder()
@@ -47,9 +47,12 @@ def get_upcoming_events() -> str:
 
 # Function to get points information
 def get_points_info() -> str:
-    # Implement your logic here to fetch points information from your data source
-    # For example, you can query a database, calculate points, etc.
-    # For this example, I'll just return a dummy response:
+    '''
+    TODO:
+    Queries the Master sheet for fam points information and returns a string containing the leaderboard.
+    
+    Contains dummy data for now.
+    '''
     return ("🏅 SSA Fams Leaderboard 🏅\n" 
            "1. Fam 1 - 100 points\n" 
            "2. Fam 2 - 20 points\n")
@@ -60,6 +63,23 @@ def get_acknowledgements() -> str:
             "- Kai Jun Tay C.O'25\n"
             "- Matthew Ryan Teo C.O'25\n"
             "- Pierce Chong C.O'25")
+
+def get_welcome_message(user) -> str:
+    '''
+    TODO: Replace @ssadev_bot with production bot username
+    '''
+    return (
+        f"Hello {user.first_name}! 🇸🇬🎉\n\n"
+        "Welcome to the Singapore Students Association at UCLA! I am Ah Gong🧓, SSA's oldest honorary member.\n\n"
+        "I provide useful information and updates for Singaporeans at UCLA.\n\n"
+        "📢 Use /help to see a list of available commands and explore what I can do for you.\n\n"
+        "👉 Send @ssadev_bot a DM to sign up for a profile!\n\n"
+        "Connect with us online:\n"
+        "📸 https://www.instagram.com/ucla.ssa/\n"
+        "🎮 https://discord.gg/P7cjZXa92\n"
+        "🌐 https://www.uclassa.org/\n\n"
+        "Feel free to reach out to any board member if you have questions or need assistance.\n"
+        "We're here to make your experience at UCLA as enjoyable as possible! 😊\n\n")
 
 # Function to create the menu with options
 def create_menu(update) -> InlineKeyboardMarkup:
@@ -97,19 +117,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         group_ids.addOrUpdateGroup(group_id, group_name)
     
     user = update.message.from_user
-    welcome_message = (
-        f"Hello {user.first_name}! 🇸🇬🎉\n\n"
-        "Welcome to the Singapore Students Association at UCLA! I am Ah Gong🧓, SSA's oldest honorary member.\n\n"
-        "I provide useful information and updates for Singaporeans at UCLA.\n\n"
-        "📢 Use /help to see a list of available commands and explore what I can do for you.\n\n"
-        "👉 Send @ssadev_bot a DM to sign up for a profile!\n\n"
-        "Connect with us online:\n"
-        "📸 https://www.instagram.com/ucla.ssa/\n"
-        "🎮 https://discord.gg/P7cjZXa92\n"
-        "🌐 https://www.uclassa.org/\n\n"
-        "Feel free to reach out to any board member if you have questions or need assistance.\n"
-        "We're here to make your experience at UCLA as enjoyable as possible! 😊\n\n" 
-    )
+    welcome_message = get_welcome_message(user)
 
     # Call the function to create the menu
     reply_markup = create_menu(update)
@@ -140,8 +148,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             new_text: str = text.replace(BOT_USERNAME, "").strip()
             response: str = handle_response(new_text)
         else:
-            return
-          
+            return 
     else:
         # Check if the bot is waiting for user feedback
         if context.user_data.get("state") == "waiting_for_feedback":
@@ -206,11 +213,10 @@ if __name__ == "__main__":
     # Callbacks for menu button clicks
     app.add_handler(CallbackQueryHandler(on_button_click))
     
-    # Profile setup handlers
-    # States
+    # Profile Setup
     FIRST_NAME = profile_setup.FIRST_NAME
     LAST_NAME = profile_setup.LAST_NAME
-    CLASS = profile_setup.CLASS
+    YEAR = profile_setup.YEAR
     MAJOR = profile_setup.MAJOR
     BIRTHDAY_DAY = profile_setup.BIRTHDAY_DAY
     BIRTHDAY_MONTH = profile_setup.BIRTHDAY_MONTH
@@ -224,7 +230,7 @@ if __name__ == "__main__":
         states={
             FIRST_NAME: [MessageHandler(filters.TEXT, profile_setup.save_first_name)],
             LAST_NAME: [MessageHandler(filters.TEXT, profile_setup.save_last_name)],
-            CLASS: [MessageHandler(filters.TEXT, profile_setup.save_class)],
+            YEAR: [MessageHandler(filters.TEXT, profile_setup.save_year)],
             MAJOR: [MessageHandler(filters.TEXT, profile_setup.save_major)],
             BIRTHDAY_DAY: [MessageHandler(filters.TEXT, profile_setup.save_birthday_day)],
             BIRTHDAY_MONTH: [MessageHandler(filters.TEXT, profile_setup.save_birthday_month)],
