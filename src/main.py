@@ -1,17 +1,18 @@
 import os
+import sys
+import pytz
+import json
 
 from typing import final
 from dotenv import load_dotenv
-import pytz
 from datetime import datetime, time
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
-from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
+from telegram.ext import ConversationHandler, Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
+from profiles import ProfileSetup
+# from backend.google_sheets import Members, Events, GroupIDs
 
 APPLICATION_DIR = os.path.join(os.path.dirname(__file__), '..')
-
-import sys
 sys.path.append(APPLICATION_DIR)
-from backend.google_sheets import Members, Events, GroupIDs
 
 # Load environment variables from ./../config.env
 dotenv_path = os.path.join(APPLICATION_DIR, 'config.env')
@@ -24,9 +25,9 @@ SHEET_ID: final = os.environ.get("MASTER_SHEET")
 sg_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
 REMINDER_TIME: final = time(8, 0, 0, tzinfo=sg_timezone)
 
-events = Events(SHEET_ID, current_date=datetime.now(sg_timezone).date())
-members = Members(SHEET_ID)
-group_ids = GroupIDs(SHEET_ID, dev_mode=False)
+# events = Events(SHEET_ID, current_date=datetime.now(sg_timezone).date())
+# members = Members(SHEET_ID)
+# group_ids = GroupIDs(SHEET_ID, dev_mode=False)
 
 async def event_reminder(context: ContextTypes.DEFAULT_TYPE):
     reminder = events.generateReminder()
@@ -61,12 +62,12 @@ def get_acknowledgements() -> str:
             "- Pierce Chong C.O'25")
 
 # Function to create the menu with options
-def create_menu() -> InlineKeyboardMarkup:
+def create_menu(update) -> InlineKeyboardMarkup:
     keyboard = [
         [InlineKeyboardButton("Upcoming Events", callback_data="events")],
         [InlineKeyboardButton("SSA Fams Leaderboard", callback_data="fam_points")],
         [InlineKeyboardButton("Bot Feedback", callback_data="feedback")],
-        [InlineKeyboardButton("Ah Gong's Supportive Grandchildren", callback_data="supportive_grandchildren")], 
+        [InlineKeyboardButton("Ah Gong's Supportive Grandchildren", callback_data="supportive_grandchildren")]
     ]
     return InlineKeyboardMarkup(keyboard)
 
@@ -89,7 +90,6 @@ def handle_response(text: str) -> str:
     return "Ah Gong don't understand"
 
 # Command handlers
-
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message.chat.type == 'group':
         group_id = update.message.chat_id
@@ -99,27 +99,34 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
     welcome_message = (
         f"Hello {user.first_name}! 🇸🇬🎉\n\n"
-        "Welcome to the Singapore Students Association at UCLA! I am Ah Gong, SSA's oldest honarary member and telebot. "
-        "I provide useful information and updates for Singaporean students at UCLA.\n\n"
+        "Welcome to the Singapore Students Association at UCLA! I am Ah Gong🧓, SSA's oldest honorary member.\n\n"
+        "I provide useful information and updates for Singaporeans at UCLA.\n\n"
         "📢 Use /help to see a list of available commands and explore what I can do for you.\n\n"
+        "👉 Send @ssadev_bot a DM to sign up for a profile!\n\n"
         "Connect with us online:\n"
-        "📸 Instagram: [https://www.instagram.com/ucla.ssa/]\n"
-        "🎮 Discord: [https://discord.gg/P7cjZXa92]\n"
-        "🌐 Website: [https://www.uclassa.org/]\n\n"
-        "If you have any questions or need assistance, feel free to reach out. "
+        "📸 https://www.instagram.com/ucla.ssa/\n"
+        "🎮 https://discord.gg/P7cjZXa92\n"
+        "🌐 https://www.uclassa.org/\n\n"
+        "Feel free to reach out to any board member if you have questions or need assistance.\n"
         "We're here to make your experience at UCLA as enjoyable as possible! 😊\n\n" 
     )
 
     # Call the function to create the menu
-    reply_markup = create_menu()
+    reply_markup = create_menu(update)
 
     await update.message.reply_text(welcome_message, reply_markup=reply_markup)
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Call the function to create the menu
-    reply_markup = create_menu()
+    reply_markup = create_menu(update)
+    commands = (
+        "/start - Start the bot\n"
+        "/help - See a list of available commands\n"
+    )
+    if is_private_chat(update):
+        commands += "/setup_profile - Set up your profile\n"
 
-    await update.message.reply_text("Here are our available menus:", reply_markup=reply_markup)
+    await update.message.reply_text(f"Here are our available menus:\n\n{commands}", reply_markup=reply_markup)
 
 # Message handler
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -151,7 +158,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print("Bot: ", response)
     await update.message.reply_text(response)
 
-# Menu Bottons
+# Menu Buttons
 async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()  # Await the button click acknowledgement
@@ -173,33 +180,63 @@ async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                        "(your feedback is anonymous)")
         # Set a new state using CallbackContext to indicate that we are waiting for user feedback
         context.user_data["state"] = "waiting_for_feedback"
-    elif option == "supportive_grandchildren":  # New option
-        await query.message.reply_text(get_acknowledgements())  # New response
-    else:
-        await query.message.reply_text("Invalid option selected.")
-
+    elif option == "supportive_grandchildren":
+        await query.message.reply_text(get_acknowledgements())
+        
 # Error handler
-
 async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    print(f"Update {update} caused error {context.error}")
+    print(f"Error: {context.error}")
+    print(f"Update: {json.dumps(update.to_dict(), indent=2)}")
+
+# Check if chat is private chat
+def is_private_chat(update: Update) -> bool:
+    return update.message.chat.type == "private"
 
 # Main
-
 if __name__ == "__main__":
     app = Application.builder().token(TOKEN).build()
     job_queue = app.job_queue
     remind_event = job_queue.run_daily(event_reminder, REMINDER_TIME)
-    
+    profile_setup = ProfileSetup()
+
     # Commands
     app.add_handler(CommandHandler("start", start_command))
     app.add_handler(CommandHandler("help", help_command))
     
-    # Messages
-    app.add_handler(MessageHandler(filters.TEXT, handle_message))
-    
     # Callbacks for menu button clicks
     app.add_handler(CallbackQueryHandler(on_button_click))
     
+    # Profile setup handlers
+    # States
+    FIRST_NAME = profile_setup.FIRST_NAME
+    LAST_NAME = profile_setup.LAST_NAME
+    CLASS = profile_setup.CLASS
+    MAJOR = profile_setup.MAJOR
+    BIRTHDAY_DAY = profile_setup.BIRTHDAY_DAY
+    BIRTHDAY_MONTH = profile_setup.BIRTHDAY_MONTH
+    BIRTHDAY_YEAR = profile_setup.BIRTHDAY_YEAR
+    PHOTO = profile_setup.PHOTO
+
+    app.add_handler(ConversationHandler(
+        entry_points=[
+            CommandHandler('setup_profile', profile_setup.start),
+        ],
+        states={
+            FIRST_NAME: [MessageHandler(filters.TEXT, profile_setup.save_first_name)],
+            LAST_NAME: [MessageHandler(filters.TEXT, profile_setup.save_last_name)],
+            CLASS: [MessageHandler(filters.TEXT, profile_setup.save_class)],
+            MAJOR: [MessageHandler(filters.TEXT, profile_setup.save_major)],
+            BIRTHDAY_DAY: [MessageHandler(filters.TEXT, profile_setup.save_birthday_day)],
+            BIRTHDAY_MONTH: [MessageHandler(filters.TEXT, profile_setup.save_birthday_month)],
+            BIRTHDAY_YEAR: [MessageHandler(filters.TEXT, profile_setup.save_birthday_year)],
+            PHOTO: [MessageHandler(filters.PHOTO, profile_setup.save_photo), CommandHandler('skip', profile_setup.skip_photo)],
+        },
+        fallbacks=[CommandHandler('cancel', profile_setup.cancel)])
+    )
+
+    # Messages
+    app.add_handler(MessageHandler(filters.TEXT, handle_message))
+
     # Error
     app.add_error_handler(error)
     
