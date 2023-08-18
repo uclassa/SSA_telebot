@@ -177,9 +177,11 @@ async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.reply_text("📫 What type of feedback would you like to provide? (your feedback is anonymous)", reply_markup=reply_markup)
     elif option == "bot_feedback":
         context.user_data["feedback_type"] = "bot"
+        context.user_data["state"] = "waiting_for_feedback"
         await query.message.reply_text("📫 Tell us how we can improve this bot (features, functions etc): \n\n")
     elif option == "ssa_feedback":
         context.user_data["feedback_type"] = "ssa"
+        context.user_data["state"] = "waiting_for_feedback"
         await query.message.reply_text("📫 Tell us how we can improve SSA (events, publicity, partnerships etc): \n\n")
     else:
         await query.message.reply_text("Invalid option selected.")
