@@ -53,20 +53,12 @@ def get_points_info() -> str:
            "1. Fam 1 - 100 points\n" 
            "2. Fam 2 - 20 points\n")
 
-# Acknowledgements
-def get_acknowledgements() -> str:
-    return ("🧑‍💻 The Developers 🧑‍💻\n"
-            "- Kai Jun Tay C.O'25\n"
-            "- Matthew Ryan Teo C.O'25\n"
-            "- Pierce Chong C.O'25")
-
 # Function to create the menu with options
 def create_menu() -> InlineKeyboardMarkup:
     keyboard = [
         [InlineKeyboardButton("Upcoming Events", callback_data="events")],
         [InlineKeyboardButton("SSA Fams Leaderboard", callback_data="fam_points")],
         [InlineKeyboardButton("Bot Feedback", callback_data="feedback")],
-        [InlineKeyboardButton("Ah Gong's Supportive Grandchildren", callback_data="supportive_grandchildren")], 
     ]
     return InlineKeyboardMarkup(keyboard)
 
@@ -173,8 +165,6 @@ async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                        "(your feedback is anonymous)")
         # Set a new state using CallbackContext to indicate that we are waiting for user feedback
         context.user_data["state"] = "waiting_for_feedback"
-    elif option == "supportive_grandchildren":  # New option
-        await query.message.reply_text(get_acknowledgements())  # New response
     else:
         await query.message.reply_text("Invalid option selected.")
 
