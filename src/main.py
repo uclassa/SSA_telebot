@@ -11,7 +11,7 @@ APPLICATION_DIR = os.path.join(os.path.dirname(__file__), '..')
 
 import sys
 sys.path.append(APPLICATION_DIR)
-from backend.google_sheets import Members, Events, GroupIDs
+from backend.google_sheets import Members, Events, GroupIDs, Feedback
 
 # Load environment variables from ./../config.env
 dotenv_path = os.path.join(APPLICATION_DIR, 'config.env')
@@ -27,6 +27,8 @@ REMINDER_TIME: final = time(8, 0, 0, tzinfo=sg_timezone)
 events = Events(SHEET_ID, current_date=datetime.now(sg_timezone).date())
 members = Members(SHEET_ID)
 group_ids = GroupIDs(SHEET_ID, dev_mode=False)
+feedback_sheet = Feedback(SHEET_ID)
+
 
 async def event_reminder(context: ContextTypes.DEFAULT_TYPE):
     reminder = events.generateReminder()
@@ -131,11 +133,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if context.user_data.get("state") == "waiting_for_feedback":
             if context.user_data.get("feedback_type") == "ssa":
                 feedback = (f"[SSA Feedback]\n\nFeedback From: ({update.message.chat.id})\n\n" 
-                        f"{text}\n")
+                        f"Message: {text}\n")
             elif context.user_data.get("feedback_type") == "bot":
                 feedback = (f"[Bot Feedback]\n\nFeedback From: ({update.message.chat.id})\n\n" 
-                        f"{text}\n")
+                        f"Message: {text}\n")
             # Send the feedback to another group (replace 'GROUP_ID' with the actual group ID)
+            feedback_sheet.addFeedback(feedback)
             await context.bot.send_message(chat_id=ADMIN_GRP, text=feedback)
             response = "Thank you for your feedback! Ah Gong has sent your input to my grandchildren working on improving my services."
             # Reset the state to None after handling the feedback
@@ -171,7 +174,7 @@ async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("Bot Feedback", callback_data="bot_feedback")],
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.message.reply_text("What type of feedback would you like to provide? (your feedback is anonymous)", reply_markup=reply_markup)
+        await query.message.reply_text("📫 What type of feedback would you like to provide? (your feedback is anonymous)", reply_markup=reply_markup)
     elif option == "bot_feedback":
         context.user_data["feedback_type"] = "bot"
         await query.message.reply_text("📫 Tell us how we can improve this bot (features, functions etc): \n\n")

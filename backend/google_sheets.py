@@ -266,6 +266,57 @@ class GroupIDs(Google_Sheets):
         self.refreshRead()
         group_ids = list(self.values.keys())
         return(group_ids[0] if self.dev_mode else group_ids[1:])
+    
+
+class Feedback(Google_Sheets):
+    def __init__(self, sheet_id=SHEET_ID):
+        super().__init__(spreadsheet_id=sheet_id, range_name="Feedback")
+
+    def addFeedback(self, feedback):
+        # Extract relevant information from the feedback
+        feedback_from = ''
+        message = ''
+
+        lines = feedback.split('\n')
+        feedback_type = lines[0]
+        for line in lines:
+            if line.startswith('Feedback From:'):
+                feedback_from = line[len('Feedback From:'):].strip()
+            elif line.startswith('Message:'):
+                message = line[len('Message:'):].strip()
+
+        # Get the current date and time
+        current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        # Find the next available row
+        last_row = len(self.values) + 1
+
+        # Prepare the feedback data to be appended to the sheet
+        feedback_data = [[feedback_type, current_datetime, feedback_from, message]]
+
+        # Append the feedback data to the next available row
+        range_name = f"{self.range_name}!A{last_row}"
+        request_body = {
+            'values': feedback_data
+        }
+
+        try:
+            result = self.sheet_object.append(
+                spreadsheetId=self.spreadsheet_id,
+                range=range_name,
+                valueInputOption='USER_ENTERED',
+                body=request_body
+            ).execute()
+            print(f"{result.get('updates').get('updatedCells')} cells appended.")
+            return True
+        except Exception as e:
+            print(f"An error occurred while appending rows: {e}")
+            return False
+    
+    
+    def get(self):
+        self.refreshRead()
+        return(self.values)
 
 
 # if __name__ == '__main__':
