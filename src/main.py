@@ -95,9 +95,9 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "I provide useful information and updates for Singaporean students at UCLA.\n\n"
         "📢 Use /help to see a list of available commands and explore what I can do for you.\n\n"
         "Connect with us online:\n"
-        "📸 Instagram: [https://www.instagram.com/ucla.ssa/]\n"
-        "🎮 Discord: [https://discord.gg/P7cjZXa92]\n"
-        "🌐 Website: [https://www.uclassa.org/]\n\n"
+        "📸 [Instagram](https://www.instagram.com/ucla.ssa/)\n"
+        "🎮 [Discord](https://discord.gg/P7cjZXa92)\n"
+        "🌐 [Website](https://www.uclassa.org/)\n\n"
         "If you have any questions or need assistance, feel free to reach out. "
         "We're here to make your experience at UCLA as enjoyable as possible! 😊\n\n" 
     )
@@ -105,7 +105,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Call the function to create the menu
     reply_markup = create_menu()
 
-    await update.message.reply_text(welcome_message, reply_markup=reply_markup)
+    await update.message.reply_text(welcome_message, disable_web_page_preview=True, reply_markup=reply_markup, parse_mode= "Markdown")
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Call the function to create the menu
