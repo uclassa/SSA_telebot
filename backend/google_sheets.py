@@ -151,7 +151,7 @@ class Events(Google_Sheets):
             str: message to be displayed by the bot
         """
         self.refreshRead()
-        reply = '🎈 <u>Here are the upcoming events</u> 🎈\n\n'
+        reply = '🎈 <u>Upcoming events</u> 🎈\n\n'
         count = 0
         for _, value in self.values.items():
             if self.getDayDiff(value[1]) > 0:

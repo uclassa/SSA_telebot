@@ -50,8 +50,7 @@ def get_points_info() -> str:
     # For example, you can query a database, calculate points, etc.
     # For this example, I'll just return a dummy response:
     return ("🏅 SSA Fams Leaderboard 🏅\n" 
-           "1. Fam 1 - 100 points\n" 
-           "2. Fam 2 - 20 points\n")
+           "            ~coming soon~     \n")
 
 # Function to create the menu with options
 def create_menu() -> InlineKeyboardMarkup:
