@@ -65,9 +65,8 @@ class Google_Sheets(ABC):
             self.values = {}
             for row in rows[1:]:
                 if row[0] not in self.values:
-                    self.values[int(row[0])] = row[1:]
-                else:
-                    raise ValueError("Duplicate key found")
+                    self.values[row[0]] = row[1:]
+                
         except ValueError as error:
             print(f"An error occurred: {error}")
             return
@@ -82,7 +81,7 @@ class Google_Sheets(ABC):
         result = self.sheet_object.get(spreadsheetId=self.spreadsheet_id, range=self.range_name).execute()
         rows = result.get('values', [])
         for row in rows[1:]:
-            self.values[int(row[0])] = row[1:]
+            self.values[row[0]] = row[1:]
     
     
     @abstractmethod
@@ -289,6 +288,7 @@ class Feedback(Google_Sheets):
         current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         # Find the next available row
+        self.refreshRead()
         last_row = len(self.values) + 1
 
         # Prepare the feedback data to be appended to the sheet
