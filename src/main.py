@@ -79,8 +79,6 @@ def handle_response(text: str) -> str:
     if "leaderboard" in processed_text:
         return get_points_info()
 
-    return "Ah Gong don't understand"
-
 # Command handlers
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
