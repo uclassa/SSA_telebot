@@ -12,7 +12,7 @@ from profiles import ProfileSetup
 
 APPLICATION_DIR = os.path.join(os.path.dirname(__file__), '..')
 sys.path.append(APPLICATION_DIR)
-from backend.google_sheets import Members, Events, GroupIDs
+from backend.google_sheets import Members, Events, GroupIDs, Feedback
 
 # Load environment variables from ./../config.env
 dotenv_path = os.path.join(APPLICATION_DIR, 'config.env')
@@ -28,6 +28,8 @@ REMINDER_TIME: final = time(8, 0, 0, tzinfo=sg_timezone)
 events = Events(SHEET_ID, current_date=datetime.now(sg_timezone).date())
 members = Members(SHEET_ID)
 group_ids = GroupIDs(SHEET_ID, dev_mode=False)
+feedback_sheet = Feedback(SHEET_ID)
+
 
 async def event_reminder(context: ContextTypes.DEFAULT_TYPE):
     reminder = events.generateReminder()
@@ -54,32 +56,7 @@ def get_points_info() -> str:
     Contains dummy data for now.
     '''
     return ("🏅 SSA Fams Leaderboard 🏅\n" 
-           "1. Fam 1 - 100 points\n" 
-           "2. Fam 2 - 20 points\n")
-
-# Acknowledgements
-def get_acknowledgements() -> str:
-    return ("🧑‍💻 The Developers 🧑‍💻\n"
-            "- Kai Jun Tay C.O'25\n"
-            "- Matthew Ryan Teo C.O'25\n"
-            "- Pierce Chong C.O'25")
-
-def get_welcome_message(user) -> str:
-    '''
-    TODO: Replace @ssadev_bot with production bot username
-    '''
-    return (
-        f"Hello {user.first_name}! 🇸🇬🎉\n\n"
-        "Welcome to the Singapore Students Association at UCLA! I am Ah Gong🧓, SSA's oldest honorary member.\n\n"
-        "I provide useful information and updates for Singaporeans at UCLA.\n\n"
-        "📢 Use /help to see a list of available commands and explore what I can do for you.\n\n"
-        "👉 Send @ssadev_bot a DM to sign up for a profile!\n\n"
-        "Connect with us online:\n"
-        "📸 https://www.instagram.com/ucla.ssa/\n"
-        "🎮 https://discord.gg/P7cjZXa92\n"
-        "🌐 https://www.uclassa.org/\n\n"
-        "Feel free to reach out to any board member if you have questions or need assistance.\n"
-        "We're here to make your experience at UCLA as enjoyable as possible! 😊\n\n")
+           "            ~coming soon~     \n")
 
 # Function to create the menu with options
 def create_menu(update) -> InlineKeyboardMarkup:
@@ -87,7 +64,7 @@ def create_menu(update) -> InlineKeyboardMarkup:
         [InlineKeyboardButton("Upcoming Events", callback_data="events")],
         [InlineKeyboardButton("SSA Fams Leaderboard", callback_data="fam_points")],
         [InlineKeyboardButton("Bot Feedback", callback_data="feedback")],
-        [InlineKeyboardButton("Ah Gong's Supportive Grandchildren", callback_data="supportive_grandchildren")]
+        # [InlineKeyboardButton("Ah Gong's Supportive Grandchildren", callback_data="supportive_grandchildren")]
     ]
     return InlineKeyboardMarkup(keyboard)
 
@@ -109,6 +86,22 @@ def handle_response(text: str) -> str:
 
     return "Ah Gong don't understand"
 
+# Function to get welcome message
+def get_welcome_message(user) -> str:
+    return (
+            f"Hello {user.first_name}! 🇸🇬🎉\n\n"
+            "Welcome to the Singapore Students Association at UCLA! I am Ah Gong, SSA's oldest honorary member and telebot. "
+            "I provide useful information and updates for Singaporean students at UCLA.\n\n"
+            "👉 Send @uclassa_telebot a DM to sign up for a profile!\n\n"
+            "📢 Use /help to see a list of available commands and explore what I can do for you.\n\n"
+            "Connect with us online:\n"
+            "📸 <a href='https://www.instagram.com/ucla.ssa/'>Instagram</a>\n"
+            "🎮 <a href='https://discord.gg/P7cjZXa92'>Discord</a>\n"
+            "🌐 <a href='https://www.uclassa.org/'>Website</a>\n\n"
+            "If you have any questions or need assistance, feel free to reach out. "
+            "We're here to make your experience at UCLA as enjoyable as possible! 😊\n\n"
+        )
+
 # Command handlers
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message.chat.type == 'group':
@@ -122,7 +115,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Call the function to create the menu
     reply_markup = create_menu(update)
 
-    await update.message.reply_text(welcome_message, reply_markup=reply_markup)
+    await update.message.reply_text(welcome_message, disable_web_page_preview=True, reply_markup=reply_markup, parse_mode= "HTML")
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Call the function to create the menu
@@ -152,9 +145,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         # Check if the bot is waiting for user feedback
         if context.user_data.get("state") == "waiting_for_feedback":
-            feedback = (f"Feedback From: ({update.message.chat.id})\n\n" 
-                    f"{text}\n")
+            if context.user_data.get("feedback_type") == "ssa":
+                feedback = (f"[SSA Feedback]\n\nFeedback From: ({update.message.chat.id})\n\n" 
+                        f"Message: {text}\n")
+            elif context.user_data.get("feedback_type") == "bot":
+                feedback = (f"[Bot Feedback]\n\nFeedback From: ({update.message.chat.id})\n\n" 
+                        f"Message: {text}\n")
             # Send the feedback to another group (replace 'GROUP_ID' with the actual group ID)
+            feedback_sheet.addFeedback(feedback)
             await context.bot.send_message(chat_id=ADMIN_GRP, text=feedback)
             response = "Thank you for your feedback! Ah Gong has sent your input to my grandchildren working on improving my services."
             # Reset the state to None after handling the feedback
@@ -172,7 +170,7 @@ async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     option = query.data
 
-    if context.user_data.get("state") == "waiting_for_feedback":
+    if context.user_data.get("state") == "waiting_for_feedback" and not (option == "ssa_feedback" or option == "bot_feedback"):
         # Reset the feedback state
         context.user_data["state"] = None
         await query.message.reply_text("📫 No feedback received, we'd love to hear from you anytime!")
@@ -183,13 +181,25 @@ async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif option == "fam_points":
         await query.message.reply_text(get_points_info())
     elif option == "feedback":
-        await query.message.reply_text("📫 Tell us how we can improve this bot: \n\n"
-                                       "(your feedback is anonymous)")
         # Set a new state using CallbackContext to indicate that we are waiting for user feedback
         context.user_data["state"] = "waiting_for_feedback"
-    elif option == "supportive_grandchildren":
-        await query.message.reply_text(get_acknowledgements())
-        
+        keyboard = [
+            [InlineKeyboardButton("SSA Feedback", callback_data="ssa_feedback")],
+            [InlineKeyboardButton("Bot Feedback", callback_data="bot_feedback")],
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.message.reply_text("📫 What type of feedback would you like to provide? (your feedback is anonymous)", reply_markup=reply_markup)
+    elif option == "bot_feedback":
+        context.user_data["feedback_type"] = "bot"
+        context.user_data["state"] = "waiting_for_feedback"
+        await query.message.reply_text("📫 Tell us how we can improve this bot (features, functions etc): \n\n")
+    elif option == "ssa_feedback":
+        context.user_data["feedback_type"] = "ssa"
+        context.user_data["state"] = "waiting_for_feedback"
+        await query.message.reply_text("📫 Tell us how we can improve SSA (events, publicity, partnerships etc): \n\n")
+    else:
+        await query.message.reply_text("Invalid option selected.")
+
 # Error handler
 async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(f"Error: {context.error}")
