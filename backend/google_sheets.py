@@ -137,7 +137,7 @@ class Members(Google_Sheets):
             bool: True if user_id is in the sheet, False otherwise
         """
         members = self.get()
-        return members.get(user_id) != None
+        return members.get(str(user_id)) != None
 
 class Events(Google_Sheets):
     def __init__(self, sheet_id=SHEET_ID, current_date=datetime.now().date()):

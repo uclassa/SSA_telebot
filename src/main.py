@@ -205,7 +205,7 @@ async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif option == "setup_profile":
         chat_type = query.message.chat.type
         if chat_type == 'private':
-            await query.message.reply_text("Click this command to start creating your profile -> /setup_profile")
+            await query.message.reply_text("Lets start creating your profile! Click here: /setup_profile")
         else:
             await query.message.reply_text("This feature is not supported for group chats. Please DM Ah Gong @uclassa_telebot to create your profile")
     else:
