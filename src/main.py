@@ -61,6 +61,7 @@ def get_points_info() -> str:
 # Function to create the menu with options
 def create_menu(update) -> InlineKeyboardMarkup:
     keyboard = [
+        [InlineKeyboardButton("Create Profile", callback_data="setup_profile")],
         [InlineKeyboardButton("Upcoming Events", callback_data="events")],
         [InlineKeyboardButton("SSA Fams Leaderboard", callback_data="fam_points")],
         [InlineKeyboardButton("Bot Feedback", callback_data="feedback")],
@@ -201,6 +202,12 @@ async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["feedback_type"] = "ssa"
         context.user_data["state"] = "waiting_for_feedback"
         await query.message.reply_text("📫 Tell us how we can improve SSA (events, publicity, partnerships etc): \n\n")
+    elif option == "setup_profile":
+        chat_type = query.message.chat.type
+        if chat_type == 'private':
+            await query.message.reply_text("Click this command to start creating your profile -> /setup_profile")
+        else:
+            await query.message.reply_text("This feature is not supported for group chats. Please DM Ah Gong @uclassa_telebot to create your profile")
     else:
         await query.message.reply_text("Invalid option selected.")
 
