@@ -181,14 +181,18 @@ async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif option == "fam_points":
         await query.message.reply_text(get_points_info())
     elif option == "feedback":
-        # Set a new state using CallbackContext to indicate that we are waiting for user feedback
-        context.user_data["state"] = "waiting_for_feedback"
-        keyboard = [
-            [InlineKeyboardButton("SSA Feedback", callback_data="ssa_feedback")],
-            [InlineKeyboardButton("Bot Feedback", callback_data="bot_feedback")],
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.message.reply_text("📫 What type of feedback would you like to provide? (your feedback is anonymous)", reply_markup=reply_markup)
+        chat_type = query.message.chat.type
+        if chat_type == 'private':
+            # Set a new state using CallbackContext to indicate that we are waiting for user feedback
+            context.user_data["state"] = "waiting_for_feedback"
+            keyboard = [
+                [InlineKeyboardButton("SSA Feedback", callback_data="ssa_feedback")],
+                [InlineKeyboardButton("Bot Feedback", callback_data="bot_feedback")],
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await query.message.reply_text("📫 What type of feedback would you like to provide? (your feedback is anonymous)", reply_markup=reply_markup)
+        elif chat_type == 'group':
+            await query.message.reply_text("📫 This feature is not supported for group chats. Please DM Ah Gong @uclassa_telebot to provide feedback. (your feedback is anonymous)")
     elif option == "bot_feedback":
         context.user_data["feedback_type"] = "bot"
         context.user_data["state"] = "waiting_for_feedback"
