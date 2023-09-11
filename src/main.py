@@ -9,10 +9,11 @@ from datetime import datetime, time
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import ConversationHandler, Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
 from profiles import ProfileSetup
+from fam_submissions import FamSubmissions
 
 APPLICATION_DIR = os.path.join(os.path.dirname(__file__), '..')
 sys.path.append(APPLICATION_DIR)
-from backend.google_sheets import Members, Events, GroupIDs, Feedback
+from backend.google_sheets import Members, Events, GroupIDs, Feedback, Submissions
 
 # Load environment variables from ./../config.env
 dotenv_path = os.path.join(APPLICATION_DIR, 'config.env')
@@ -29,6 +30,7 @@ events = Events(SHEET_ID, current_date=datetime.now(sg_timezone).date())
 members = Members(SHEET_ID)
 group_ids = GroupIDs(SHEET_ID, dev_mode=False)
 feedback_sheet = Feedback(SHEET_ID)
+fam_sheet = Submissions(SHEET_ID)
 
 
 async def event_reminder(context: ContextTypes.DEFAULT_TYPE):
@@ -64,6 +66,7 @@ def create_menu(update) -> InlineKeyboardMarkup:
         [InlineKeyboardButton("Create Profile", callback_data="setup_profile")],
         [InlineKeyboardButton("Upcoming Events", callback_data="events")],
         [InlineKeyboardButton("SSA Fams Leaderboard", callback_data="fam_points")],
+        [InlineKeyboardButton("SSA Fams Photo Submissions", callback_data="submit_photo")],
         [InlineKeyboardButton("Bot Feedback", callback_data="feedback")],
         # [InlineKeyboardButton("Ah Gong's Supportive Grandchildren", callback_data="supportive_grandchildren")]
     ]
@@ -208,6 +211,12 @@ async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.message.reply_text("Lets start creating your profile! Click here: /setup_profile")
         else:
             await query.message.reply_text("This feature is not supported for group chats. Please DM Ah Gong @uclassa_telebot to create your profile")
+    elif option == "submit_photo":
+        chat_type = query.message.chat.type
+        if chat_type == 'private':
+            await query.message.reply_text("Lets start submitting your fam photos! Click here: /submit_photo")
+        else:
+            await query.message.reply_text("This feature is not supported for group chats. Please ask your fam head to DM Ah Gong @uclassa_telebot to submit your photos")
     else:
         await query.message.reply_text("Invalid option selected.")
 
@@ -226,6 +235,7 @@ if __name__ == "__main__":
     job_queue = app.job_queue
     remind_event = job_queue.run_daily(event_reminder, REMINDER_TIME)
     profile_setup = ProfileSetup()
+    fam_submissions = FamSubmissions()
 
     # Commands
     app.add_handler(CommandHandler("start", start_command))
@@ -260,6 +270,29 @@ if __name__ == "__main__":
         },
         fallbacks=[CommandHandler('cancel', profile_setup.cancel)])
     )
+
+    NAME = fam_submissions.NAME
+    FAMILY = fam_submissions.FAMILY
+    FAMPHOTO = fam_submissions.FAMPHOTO
+    DESCRIPTION = fam_submissions.DESCRIPTION
+    NUMBER = fam_submissions.NUMBER
+
+
+    app.add_handler(ConversationHandler(
+        entry_points=[
+            CommandHandler('submit_photo', fam_submissions.start),
+        ],
+        states={
+            NAME: [MessageHandler(filters.TEXT, fam_submissions.save_name)],
+            FAMILY: [MessageHandler(filters.TEXT, fam_submissions.save_family)],
+            FAMPHOTO: [MessageHandler(filters.PHOTO, fam_submissions.save_famphoto)],
+            DESCRIPTION: [MessageHandler(filters.TEXT, fam_submissions.save_description)],
+            NUMBER: [MessageHandler(filters.TEXT, fam_submissions.save_number)],
+        },
+        fallbacks=[CommandHandler('cancel', fam_submissions.cancel)])
+    )
+
+
 
     # Messages
     app.add_handler(MessageHandler(filters.TEXT, handle_message))

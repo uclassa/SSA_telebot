@@ -358,6 +358,55 @@ class Feedback(Google_Sheets):
         self.refreshRead()
         return(self.values)
 
+class Submissions(Google_Sheets):
+    def __init__(self, sheet_id=SHEET_ID):
+        super().__init__(spreadsheet_id=sheet_id, range_name="Submissions")
+
+    def add_member(self, member):
+        """Adds a member to the sheet
+
+        Args:
+            member (Member): Member object to be added to the sheet
+        """
+        self.refreshRead()
+        if not member['user_id'] in self.values:
+            # TODO: Include reference photo
+            self.values[member['user_id']] = [member['first_name'], member['last_name'], member['year'], member['major'], member['birthday']]
+            
+            try:
+                body = {
+                    'values': [[member['user_id'], member['first_name'], member['last_name'], member['year'], member['major'], member['birthday']]]
+                }
+                result = self.sheet_object.append(
+                    spreadsheetId=self.spreadsheet_id, 
+                    range=self.range_name, 
+                    valueInputOption='USER_ENTERED', 
+                    body=body
+                ).execute()
+
+                print(f"{result.get('updates').get('updatedCells')} cells appended.")
+            except HttpError as error:
+                print(f"An error occurred: {error}")
+                return
+        else:
+            print("Member already exists in the sheet")
+            return
+    
+    def get(self):
+        self.refreshRead()
+        return(self.values)
+    
+    def is_member(self, user_id):
+        """Checks if user_id is in the sheet
+
+        Args:
+            user_id (int): id of telegram user
+
+        Returns:
+            bool: True if user_id is in the sheet, False otherwise
+        """
+        members = self.get()
+        return members.get(str(user_id)) != None
 
 # if __name__ == '__main__':
     # members = Members()
