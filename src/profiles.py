@@ -7,6 +7,7 @@ from telegram.ext import ConversationHandler, CallbackContext
 APPLICATION_DIR = os.path.join(os.path.dirname(__file__), '..')
 sys.path.append(APPLICATION_DIR)
 from backend.google_sheets import Members
+from backend.google_drive import Google_Drive
 
 class ProfileSetup:
     """
@@ -16,6 +17,7 @@ class ProfileSetup:
     def __init__(self):
         self.FIRST_NAME, self.LAST_NAME, self.YEAR, self.MAJOR, self.BIRTHDAY_DAY, self.BIRTHDAY_MONTH, self.BIRTHDAY_YEAR, self.PHOTO = range(8)
         self.members_db = Members()
+        self.photo_upload = Google_Drive()
 
     async def start(self, update: Update, context: CallbackContext) -> int:
         """
@@ -107,7 +109,18 @@ class ProfileSetup:
     # TODO: Implement way store image data before uploading to database
     async def save_photo(self, update: Update, context: CallbackContext) -> int:
         photo_file = await update.message.photo[-1].get_file()
+        await update.message.reply_text(
+            f"Uploading your image profile...(please wait for a moment)"
+        )
         await photo_file.download_to_drive(f'{update.message.from_user.id}.jpg')
+        photo_file_name = f'{update.message.from_user.id}.jpg'
+        current_directory = os.getcwd()
+        photo_path = os.path.join(current_directory, photo_file_name)
+        image_file_id = self.photo_upload.upload_member_image(photo_path)
+        image_formula = f'=IMAGE("https://drive.google.com/uc?export=view&id={image_file_id}")'
+        image_link_formula = f'=HYPERLINK("https://drive.google.com/uc?export=view&id={image_file_id}", "Link to Image")'
+        context.user_data['image_preview'] = image_formula
+        context.user_data['image_link'] = image_link_formula
 
         await self._store_profile_in_database(update, context.user_data)
         await update.message.reply_text(

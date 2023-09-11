@@ -75,5 +75,5 @@ class Google_Drive():
         except HttpError as error:
             print(F'An error occurred: {error}')
             file = None
-
+        os.remove(image_path)
         return file.get('id')

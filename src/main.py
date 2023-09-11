@@ -66,7 +66,7 @@ def create_menu(update) -> InlineKeyboardMarkup:
         [InlineKeyboardButton("Upcoming Events", callback_data="events")],
         [InlineKeyboardButton("SSA Fams Leaderboard", callback_data="fam_points")],
         [InlineKeyboardButton("SSA Fams Photo Submissions", callback_data="submit_photo")],
-        [InlineKeyboardButton("Bot Feedback", callback_data="feedback")],
+        [InlineKeyboardButton("Feedback", callback_data="feedback")],
         # [InlineKeyboardButton("Ah Gong's Supportive Grandchildren", callback_data="supportive_grandchildren")]
     ]
     return InlineKeyboardMarkup(keyboard)
@@ -75,19 +75,6 @@ def create_menu(update) -> InlineKeyboardMarkup:
 def handle_response(text: str) -> str:
     processed_text: str = text.lower()
 
-    if "hello" in processed_text:
-        return "Selamat Pagi"
-
-    if "singapore" in processed_text:
-        return "Majulah Singapura"
-
-    if "next event" in processed_text:
-        return get_upcoming_events()
-
-    if "leaderboard" in processed_text:
-        return get_points_info()
-
-    return "Ah Gong don't understand"
 
 # Function to get welcome message
 def get_welcome_message(user) -> str:

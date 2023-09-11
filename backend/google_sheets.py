@@ -94,11 +94,11 @@ class Members(Google_Sheets):
         self.refreshRead()
         if not member['user_id'] in self.values:
             # TODO: Include reference photo
-            self.values[member['user_id']] = [member['first_name'], member['last_name'], member['year'], member['major'], member['birthday']]
+            self.values[member['user_id']] = [member['first_name'], member['last_name'], member['year'], member['major'], member['birthday'], member['image_preview'], member['image_link']]
             
             try:
                 body = {
-                    'values': [[member['user_id'], member['first_name'], member['last_name'], member['year'], member['major'], member['birthday']]]
+                    'values': [[member['user_id'], member['first_name'], member['last_name'], member['year'], member['major'], member['birthday'], member['image_preview'], member['image_link']]]
                 }
                 result = self.sheet_object.append(
                     spreadsheetId=self.spreadsheet_id, 
