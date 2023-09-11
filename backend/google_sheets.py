@@ -363,11 +363,11 @@ class Submissions(Google_Sheets):
         """
         self.refreshRead()
         # TODO: Include reference photo
-        self.values[submission['user_id']] = [submission['date/time'], submission['name'], submission['family'], submission['description'], submission['number']]
+        self.values[submission['user_id']] = [submission['date/time'], submission['name'], submission['family'], submission['description'], submission['number'], submission['image_preview'], submission['image_link']]
         
         try:
             body = {
-                'values': [[submission['date/time'], submission['user_id'], submission['name'], submission['family'], submission['description'], submission['number']]]
+                'values': [[submission['date/time'], submission['user_id'], submission['name'], submission['family'], submission['description'], submission['number'], submission['image_preview'], submission['image_link']]]
             }
             result = self.sheet_object.append(
                 spreadsheetId=self.spreadsheet_id, 

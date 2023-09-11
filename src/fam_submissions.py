@@ -8,6 +8,7 @@ from telegram.ext import ConversationHandler, CallbackContext
 APPLICATION_DIR = os.path.join(os.path.dirname(__file__), '..')
 sys.path.append(APPLICATION_DIR)
 from backend.google_sheets import Submissions
+from backend.google_drive import Google_Drive
 
 class FamSubmissions:
     """
@@ -17,6 +18,7 @@ class FamSubmissions:
     def __init__(self):
         self.NAME, self.FAMILY, self.DESCRIPTION, self.FAMPHOTO, self.NUMBER = range(5)
         self.submisions_db = Submissions()
+        self.photo_upload = Google_Drive()
 
     async def start(self, update: Update, context: CallbackContext) -> int:
         """
@@ -52,9 +54,20 @@ class FamSubmissions:
     # TODO: Implement way store image data before uploading to database
     async def save_famphoto(self, update: Update, context: CallbackContext) -> int:
         photo_file = await update.message.photo[-1].get_file()
-        await photo_file.download_to_drive(f'{update.message.from_user.id}.jpg')
         await update.message.reply_text(
-            f"Looking good! Describe your photo/event!"
+            f"Uploading your image...(please wait for a moment)"
+        )
+        await photo_file.download_to_drive(f'{update.message.from_user.id}.jpg')
+        photo_file_name = f'{update.message.from_user.id}.jpg'
+        current_directory = os.getcwd()
+        photo_path = os.path.join(current_directory, photo_file_name)
+        image_file_id = self.photo_upload.upload_group_image(photo_path)
+        image_formula = f'=IMAGE("https://drive.google.com/uc?export=view&id={image_file_id}")'
+        image_link_formula = f'=HYPERLINK("https://drive.google.com/uc?export=view&id={image_file_id}", "Link to Image")'
+        context.user_data['image_preview'] = image_formula
+        context.user_data['image_link'] = image_link_formula
+        await update.message.reply_text(
+            f"Thank you for your patience! Upload Completed! Describe your photo/event:"
         )
         return self.DESCRIPTION
 
@@ -65,8 +78,7 @@ class FamSubmissions:
         '''
         context.user_data['description'] = update.message.text
 
-        num_options = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"]
-        num_buttons = [[InlineKeyboardButton(option, callback_data=option)] for option in num_options]
+        num_buttons = [[InlineKeyboardButton(str(number), callback_data=str(number)) for number in range(3, 30)[i:i+3]] for i in range(0, 27, 3)]
 
         await update.message.reply_text(f"Brilliant! Hope your family had a great time with each other, how many people from your family attended this event?", reply_markup=ReplyKeyboardMarkup(num_buttons, one_time_keyboard=True))
         return self.NUMBER

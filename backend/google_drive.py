@@ -39,7 +39,7 @@ class Google_Drive():
         """Insert new image.
         Returns : Id's of the image uploaded
         """
-
+        print(image_path)
         try:
             file_metadata = {'name': image_path, 'parents': [GROUP_IMAGES_FOLDER]}
 
@@ -53,7 +53,7 @@ class Google_Drive():
         except HttpError as error:
             print(F'An error occurred: {error}')
             file = None
-
+        os.remove(image_path)
         return file.get('id')
 
     # TODO: Change to upload image received by bot
