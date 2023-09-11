@@ -1,12 +1,13 @@
 import os
 import sys
 
+from datetime import datetime
 from telegram import Update, InlineKeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import ConversationHandler, CallbackContext
 
 APPLICATION_DIR = os.path.join(os.path.dirname(__file__), '..')
 sys.path.append(APPLICATION_DIR)
-from backend.google_sheets import Members
+from backend.google_sheets import Submissions
 
 class FamSubmissions:
     """
@@ -15,7 +16,7 @@ class FamSubmissions:
 
     def __init__(self):
         self.NAME, self.FAMILY, self.DESCRIPTION, self.FAMPHOTO, self.NUMBER = range(5)
-        self.members_db = Members()
+        self.submisions_db = Submissions()
 
     async def start(self, update: Update, context: CallbackContext) -> int:
         """
@@ -64,7 +65,10 @@ class FamSubmissions:
         '''
         context.user_data['description'] = update.message.text
 
-        await update.message.reply_text(f"Brilliant! Hope your family had a great time with each other, how many people from your family attended this event?")
+        num_options = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"]
+        num_buttons = [[InlineKeyboardButton(option, callback_data=option)] for option in num_options]
+
+        await update.message.reply_text(f"Brilliant! Hope your family had a great time with each other, how many people from your family attended this event?", reply_markup=ReplyKeyboardMarkup(num_buttons, one_time_keyboard=True))
         return self.NUMBER
 
     async def save_number(self, update: Update, context: CallbackContext) -> int:
@@ -73,28 +77,19 @@ class FamSubmissions:
         Asks for the user's year then creates a ReplyKeyboardMarkup containing valid options.
         '''
         context.user_data['number'] = update.message.text
-
+        current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        context.user_data['date/time'] = current_datetime
+        await self._store_profile_in_database(update, context.user_data)
         await update.message.reply_text(f"Your Fam Photos Submission for {context.user_data['family']} has been completed. Thank you {context.user_data['name']}!")
         return ConversationHandler.END
 
     async def cancel(self, update: Update) -> int:
         await update.message.reply_text("Fam Photos Submission canceled, Ah Gong never remember any info. Ttyl bestie.")
         return ConversationHandler.END
-        
-    async def skip_photo(update: Update, context: CallbackContext) -> int:
-        """
-        Skips photo upload and ends the conversation instead.
-        """
-        await self._store_profile_in_database(update, context.user_data)
-        await update.message.reply_text(
-            f"I bet you look great! Fam Photos Submission has been completed. Thanks {context.user_data['first_name']}!"
-        )
-
-        return ConversationHandler.END
-
-    async def _store_profile_in_database(self, update, profile_data):
+    
+    async def _store_profile_in_database(self, update, submission_data):
         try:
-            self.members_db.add_member(profile_data)
+            self.submisions_db.add_submission(submission_data)
         except Exception as e:
             print(e)
             await update.message.reply_text("Something went wrong, please try again later.")
