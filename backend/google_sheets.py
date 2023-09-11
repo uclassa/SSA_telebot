@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from google.oauth2.service_account import Credentials
+from .service_account_loader import get_service_account_info
 
 
 # Load environment variables from ./../config.env
@@ -25,20 +26,6 @@ with open('const.yml', 'r') as file:
 SCOPES: final = constants['API']['SCOPES']
 MAX_EVENTS: final = constants['MAX_EVENTS']
 DAY_CUTOFF: final = constants['DAY_CUTOFF']
-
-# --- Service account credentials ---
-TYPE: final = os.environ.get("type")
-PROJECT_ID: final = os.environ.get("project_id")
-PRIVATE_KEY_ID: final = os.environ.get("private_key_id")
-PRIVATE_KEY: final = os.environ.get("private_key")
-CLIENT_EMAIL: final = os.environ.get("client_email")
-CLIENT_ID: final = os.environ.get("client_id")
-AUTH_URI: final = os.environ.get("auth_uri")
-TOKEN_URI: final = os.environ.get("token_uri")
-AUTH_PROVIDER_X509_CERT_URL: final = os.environ.get("auth_provider_x509_cert_url")
-CLIENT_X509_CERT_URL: final = os.environ.get("client_x509_cert_url")
-UNIVERSE_DOMAIN: final = os.environ.get("universe_domain")
-
 
 class Google_Sheets(ABC):
     
@@ -58,22 +45,7 @@ class Google_Sheets(ABC):
         self.spreadsheet_id = spreadsheet_id
         self.range_name = range_name
 
-        creds = Credentials.from_service_account_info(
-            {
-                "type": TYPE,
-                "project_id": PROJECT_ID,
-                "private_key_id": PRIVATE_KEY_ID,
-                "private_key": PRIVATE_KEY,
-                "client_email": CLIENT_EMAIL,
-                "client_id": CLIENT_ID,
-                "auth_uri": AUTH_URI,
-                "token_uri": TOKEN_URI,
-                "auth_provider_x509_cert_url": AUTH_PROVIDER_X509_CERT_URL,
-                "client_x509_cert_url": CLIENT_X509_CERT_URL,
-                "universe_domain": UNIVERSE_DOMAIN
-            },
-            scopes=SCOPES
-        )
+        creds = Credentials.from_service_account_info(get_service_account_info(), scopes=SCOPES)
         
         try:
             service = build('sheets', 'v4', credentials=creds)

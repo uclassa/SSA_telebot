@@ -22,15 +22,14 @@ load_dotenv(dotenv_path)
 TOKEN: final = os.environ.get("TOKEN")
 BOT_USERNAME: final = os.environ.get("BOT_USERNAME")
 ADMIN_GRP: final = os.environ.get("ADMIN_GRP")
-SHEET_ID: final = os.environ.get("MASTER_SHEET")
 sg_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
 REMINDER_TIME: final = time(8, 0, 0, tzinfo=sg_timezone)
 
-events = Events(SHEET_ID, current_date=datetime.now(sg_timezone).date())
-members = Members(SHEET_ID)
-group_ids = GroupIDs(SHEET_ID, dev_mode=False)
-feedback_sheet = Feedback(SHEET_ID)
-fam_sheet = Submissions(SHEET_ID)
+events = Events(current_date=datetime.now(sg_timezone).date())
+members = Members()
+group_ids = GroupIDs(dev_mode=False)
+feedback_sheet = Feedback()
+fam_sheet = Submissions()
 
 
 async def event_reminder(context: ContextTypes.DEFAULT_TYPE):
