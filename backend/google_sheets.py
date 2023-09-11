@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
-from google.oauth2.credentials import Credentials
+from google.oauth2.service_account import Credentials
 
 
 # Load environment variables from ./../config.env
@@ -25,6 +25,20 @@ with open('const.yml', 'r') as file:
 SCOPES: final = constants['API']['SCOPES']
 MAX_EVENTS: final = constants['MAX_EVENTS']
 DAY_CUTOFF: final = constants['DAY_CUTOFF']
+
+# --- Service account credentials ---
+TYPE: final = os.environ.get("type")
+PROJECT_ID: final = os.environ.get("project_id")
+PRIVATE_KEY_ID: final = os.environ.get("private_key_id")
+PRIVATE_KEY: final = os.environ.get("private_key")
+CLIENT_EMAIL: final = os.environ.get("client_email")
+CLIENT_ID: final = os.environ.get("client_id")
+AUTH_URI: final = os.environ.get("auth_uri")
+TOKEN_URI: final = os.environ.get("token_uri")
+AUTH_PROVIDER_X509_CERT_URL: final = os.environ.get("auth_provider_x509_cert_url")
+CLIENT_X509_CERT_URL: final = os.environ.get("client_x509_cert_url")
+UNIVERSE_DOMAIN: final = os.environ.get("universe_domain")
+
 
 class Google_Sheets(ABC):
     
@@ -43,13 +57,20 @@ class Google_Sheets(ABC):
         creds = None
         self.spreadsheet_id = spreadsheet_id
         self.range_name = range_name
-        
-        creds = Credentials.from_authorized_user_info(
-            info={
-                "refresh_token": os.environ.get('google_refresh_token'),
-                "client_id": os.environ.get('google_client_id'),
-                "client_secret": os.environ.get('google_client_secret'),
-                "token_uri": os.environ.get('google_token_uri'),
+
+        creds = Credentials.from_service_account_info(
+            {
+                "type": TYPE,
+                "project_id": PROJECT_ID,
+                "private_key_id": PRIVATE_KEY_ID,
+                "private_key": PRIVATE_KEY,
+                "client_email": CLIENT_EMAIL,
+                "client_id": CLIENT_ID,
+                "auth_uri": AUTH_URI,
+                "token_uri": TOKEN_URI,
+                "auth_provider_x509_cert_url": AUTH_PROVIDER_X509_CERT_URL,
+                "client_x509_cert_url": CLIENT_X509_CERT_URL,
+                "universe_domain": UNIVERSE_DOMAIN
             },
             scopes=SCOPES
         )
@@ -73,7 +94,6 @@ class Google_Sheets(ABC):
         except HttpError as error:
             print(f"An error occurred: {error}")
             return
-        
         
     def refreshRead(self):
         """Must be called before every read operation to refresh the values stored in the object.
