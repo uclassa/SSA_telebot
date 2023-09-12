@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from google.oauth2.service_account import Credentials
+from .service_account_loader import get_service_account_info
 
 
 # Load environment variables from ./../config.env
@@ -25,20 +26,6 @@ with open('const.yml', 'r') as file:
 SCOPES: final = constants['API']['SCOPES']
 MAX_EVENTS: final = constants['MAX_EVENTS']
 DAY_CUTOFF: final = constants['DAY_CUTOFF']
-
-# --- Service account credentials ---
-TYPE: final = os.environ.get("type")
-PROJECT_ID: final = os.environ.get("project_id")
-PRIVATE_KEY_ID: final = os.environ.get("private_key_id")
-PRIVATE_KEY: final = os.environ.get("private_key")
-CLIENT_EMAIL: final = os.environ.get("client_email")
-CLIENT_ID: final = os.environ.get("client_id")
-AUTH_URI: final = os.environ.get("auth_uri")
-TOKEN_URI: final = os.environ.get("token_uri")
-AUTH_PROVIDER_X509_CERT_URL: final = os.environ.get("auth_provider_x509_cert_url")
-CLIENT_X509_CERT_URL: final = os.environ.get("client_x509_cert_url")
-UNIVERSE_DOMAIN: final = os.environ.get("universe_domain")
-
 
 class Google_Sheets(ABC):
     
@@ -58,22 +45,7 @@ class Google_Sheets(ABC):
         self.spreadsheet_id = spreadsheet_id
         self.range_name = range_name
 
-        creds = Credentials.from_service_account_info(
-            {
-                "type": TYPE,
-                "project_id": PROJECT_ID,
-                "private_key_id": PRIVATE_KEY_ID,
-                "private_key": PRIVATE_KEY,
-                "client_email": CLIENT_EMAIL,
-                "client_id": CLIENT_ID,
-                "auth_uri": AUTH_URI,
-                "token_uri": TOKEN_URI,
-                "auth_provider_x509_cert_url": AUTH_PROVIDER_X509_CERT_URL,
-                "client_x509_cert_url": CLIENT_X509_CERT_URL,
-                "universe_domain": UNIVERSE_DOMAIN
-            },
-            scopes=SCOPES
-        )
+        creds = Credentials.from_service_account_info(get_service_account_info(), scopes=SCOPES)
         
         try:
             service = build('sheets', 'v4', credentials=creds)
@@ -112,12 +84,52 @@ class Google_Sheets(ABC):
 class Members(Google_Sheets):
     def __init__(self, sheet_id=SHEET_ID):
         super().__init__(spreadsheet_id=sheet_id, range_name="Members")
-    
+
+    def add_member(self, member):
+        """Adds a member to the sheet
+
+        Args:
+            member (Member): Member object to be added to the sheet
+        """
+        self.refreshRead()
+        if not member['user_id'] in self.values:
+            # TODO: Include reference photo
+            self.values[member['user_id']] = [member['first_name'], member['last_name'], member['year'], member['major'], member['birthday'], member['image_preview'], member['image_link']]
+            
+            try:
+                body = {
+                    'values': [[member['user_id'], member['first_name'], member['last_name'], member['year'], member['major'], member['birthday'], member['image_preview'], member['image_link']]]
+                }
+                result = self.sheet_object.append(
+                    spreadsheetId=self.spreadsheet_id, 
+                    range=self.range_name, 
+                    valueInputOption='USER_ENTERED', 
+                    body=body
+                ).execute()
+
+                print(f"{result.get('updates').get('updatedCells')} cells appended.")
+            except HttpError as error:
+                print(f"An error occurred: {error}")
+                return
+        else:
+            print("Member already exists in the sheet")
+            return
     
     def get(self):
         self.refreshRead()
         return(self.values)
+    
+    def is_member(self, user_id):
+        """Checks if user_id is in the sheet
 
+        Args:
+            user_id (int): id of telegram user
+
+        Returns:
+            bool: True if user_id is in the sheet, False otherwise
+        """
+        members = self.get()
+        return members.get(str(user_id)) != None
 
 class Events(Google_Sheets):
     def __init__(self, sheet_id=SHEET_ID, current_date=datetime.now().date()):
@@ -338,6 +350,41 @@ class Feedback(Google_Sheets):
         self.refreshRead()
         return(self.values)
 
+class Submissions(Google_Sheets):
+    def __init__(self, sheet_id=SHEET_ID, current_date=datetime.now().date()):
+        super().__init__(spreadsheet_id=sheet_id, range_name="Submissions")
+        self.current_date = current_date
+
+    def add_submission(self, submission):
+        """Adds a member to the sheet
+
+        Args:
+            member (Member): Member object to be added to the sheet
+        """
+        self.refreshRead()
+        # TODO: Include reference photo
+        self.values[submission['user_id']] = [submission['date/time'], submission['name'], submission['family'], submission['description'], submission['number'], submission['image_preview'], submission['image_link']]
+        
+        try:
+            body = {
+                'values': [[submission['date/time'], submission['user_id'], submission['name'], submission['family'], submission['description'], submission['number'], submission['image_preview'], submission['image_link']]]
+            }
+            result = self.sheet_object.append(
+                spreadsheetId=self.spreadsheet_id, 
+                range=self.range_name, 
+                valueInputOption='USER_ENTERED', 
+                body=body
+            ).execute()
+
+            print(f"{result.get('updates').get('updatedCells')} cells appended.")
+        except HttpError as error:
+            print(f"An error occurred: {error}")
+            return
+    
+    def get(self):
+        self.refreshRead()
+        return(self.values)
+    
 
 # if __name__ == '__main__':
     # members = Members()

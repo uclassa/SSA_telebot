@@ -1,17 +1,19 @@
 import os
+import sys
+import pytz
+import json
 
 from typing import final
 from dotenv import load_dotenv
-import pytz
 from datetime import datetime, time
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
-from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
+from telegram.ext import ConversationHandler, Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
+from profiles import ProfileSetup
+from fam_submissions import FamSubmissions
 
 APPLICATION_DIR = os.path.join(os.path.dirname(__file__), '..')
-
-import sys
 sys.path.append(APPLICATION_DIR)
-from backend.google_sheets import Members, Events, GroupIDs, Feedback
+from backend.google_sheets import Members, Events, GroupIDs, Feedback, Submissions
 
 # Load environment variables from ./../config.env
 dotenv_path = os.path.join(APPLICATION_DIR, 'config.env')
@@ -20,14 +22,14 @@ load_dotenv(dotenv_path)
 TOKEN: final = os.environ.get("TOKEN")
 BOT_USERNAME: final = os.environ.get("BOT_USERNAME")
 ADMIN_GRP: final = os.environ.get("ADMIN_GRP")
-SHEET_ID: final = os.environ.get("MASTER_SHEET")
 sg_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
 REMINDER_TIME: final = time(8, 0, 0, tzinfo=sg_timezone)
 
-events = Events(SHEET_ID, current_date=datetime.now(sg_timezone).date())
-members = Members(SHEET_ID)
-group_ids = GroupIDs(SHEET_ID, dev_mode=False)
-feedback_sheet = Feedback(SHEET_ID)
+events = Events(current_date=datetime.now(sg_timezone).date())
+members = Members()
+group_ids = GroupIDs(dev_mode=False)
+feedback_sheet = Feedback()
+fam_sheet = Submissions()
 
 
 async def event_reminder(context: ContextTypes.DEFAULT_TYPE):
@@ -48,18 +50,24 @@ def get_upcoming_events() -> str:
 
 # Function to get points information
 def get_points_info() -> str:
-    # Implement your logic here to fetch points information from your data source
-    # For example, you can query a database, calculate points, etc.
-    # For this example, I'll just return a dummy response:
+    '''
+    TODO:
+    Queries the Master sheet for fam points information and returns a string containing the leaderboard.
+    
+    Contains dummy data for now.
+    '''
     return ("🏅 SSA Fams Leaderboard 🏅\n" 
            "            ~coming soon~     \n")
 
 # Function to create the menu with options
-def create_menu() -> InlineKeyboardMarkup:
+def create_menu(update) -> InlineKeyboardMarkup:
     keyboard = [
+        [InlineKeyboardButton("Create Profile", callback_data="setup_profile")],
         [InlineKeyboardButton("Upcoming Events", callback_data="events")],
         [InlineKeyboardButton("SSA Fams Leaderboard", callback_data="fam_points")],
+        [InlineKeyboardButton("SSA Fams Photo Submissions", callback_data="submit_photo")],
         [InlineKeyboardButton("Feedback", callback_data="feedback")],
+        # [InlineKeyboardButton("Ah Gong's Supportive Grandchildren", callback_data="supportive_grandchildren")]
     ]
     return InlineKeyboardMarkup(keyboard)
 
@@ -67,20 +75,24 @@ def create_menu() -> InlineKeyboardMarkup:
 def handle_response(text: str) -> str:
     processed_text: str = text.lower()
 
-    if "hello" in processed_text:
-        return "Selamat Pagi"
 
-    if "singapore" in processed_text:
-        return "Majulah Singapura"
-
-    if "next event" in processed_text:
-        return get_upcoming_events()
-
-    if "leaderboard" in processed_text:
-        return get_points_info()
+# Function to get welcome message
+def get_welcome_message(user) -> str:
+    return (
+            f"Hello {user.first_name}! 🇸🇬🎉\n\n"
+            "Welcome to the Singapore Students Association at UCLA! I am Ah Gong, SSA's oldest honorary member and telebot. "
+            "I provide useful information and updates for Singaporean students at UCLA.\n\n"
+            "👉 Send @uclassa_telebot a DM to sign up for a profile!\n\n"
+            "📢 Use /help to see a list of available commands and explore what I can do for you.\n\n"
+            "Connect with us online:\n"
+            "📸 <a href='https://www.instagram.com/ucla.ssa/'>Instagram</a>\n"
+            "🎮 <a href='https://discord.gg/P7cjZXa92'>Discord</a>\n"
+            "🌐 <a href='https://www.uclassa.org/'>Website</a>\n\n"
+            "If you have any questions or need assistance, feel free to reach out. "
+            "We're here to make your experience at UCLA as enjoyable as possible! 😊\n\n"
+        )
 
 # Command handlers
-
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message.chat.type == 'group':
         group_id = update.message.chat_id
@@ -88,29 +100,24 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         group_ids.addOrUpdateGroup(group_id, group_name)
     
     user = update.message.from_user
-    welcome_message = (
-        f"Hello {user.first_name}! 🇸🇬🎉\n\n"
-        "Welcome to the Singapore Students Association at UCLA! I am Ah Gong, SSA's oldest honarary member and telebot. "
-        "I provide useful information and updates for Singaporean students at UCLA.\n\n"
-        "📢 Use /help to see a list of available commands and explore what I can do for you.\n\n"
-        "Connect with us online:\n"
-        "📸 [Instagram](https://www.instagram.com/ucla.ssa/)\n"
-        "🎮 [Discord](https://discord.gg/P7cjZXa92)\n"
-        "🌐 [Website](https://www.uclassa.org/)\n\n"
-        "If you have any questions or need assistance, feel free to reach out. "
-        "We're here to make your experience at UCLA as enjoyable as possible! 😊\n\n" 
-    )
+    welcome_message = get_welcome_message(user)
 
     # Call the function to create the menu
-    reply_markup = create_menu()
+    reply_markup = create_menu(update)
 
-    await update.message.reply_text(welcome_message, disable_web_page_preview=True, reply_markup=reply_markup, parse_mode= "Markdown")
+    await update.message.reply_text(welcome_message, disable_web_page_preview=True, reply_markup=reply_markup, parse_mode= "HTML")
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Call the function to create the menu
-    reply_markup = create_menu()
+    reply_markup = create_menu(update)
+    commands = (
+        "/start - Start the bot\n"
+        "/help - See a list of available commands\n"
+    )
+    if is_private_chat(update):
+        commands += "/setup_profile - Set up your profile\n"
 
-    await update.message.reply_text("Here are our available menus:", reply_markup=reply_markup)
+    await update.message.reply_text(f"Here are our available menus:\n\n{commands}", reply_markup=reply_markup)
 
 # Message handler
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -124,8 +131,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             new_text: str = text.replace(BOT_USERNAME, "").strip()
             response: str = handle_response(new_text)
         else:
-            return
-          
+            return 
     else:
         # Check if the bot is waiting for user feedback
         if context.user_data.get("state") == "waiting_for_feedback":
@@ -147,7 +153,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print("Bot: ", response)
     await update.message.reply_text(response)
 
-# Menu Bottons
+# Menu Buttons
 async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()  # Await the button click acknowledgement
@@ -185,31 +191,98 @@ async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["feedback_type"] = "ssa"
         context.user_data["state"] = "waiting_for_feedback"
         await query.message.reply_text("📫 Tell us how we can improve SSA (events, publicity, partnerships etc): \n\n")
+    elif option == "setup_profile":
+        chat_type = query.message.chat.type
+        if chat_type == 'private':
+            await query.message.reply_text("Lets start creating your profile! Click here: /setup_profile")
+        else:
+            await query.message.reply_text("This feature is not supported for group chats. Please DM Ah Gong @uclassa_telebot to create your profile")
+    elif option == "submit_photo":
+        chat_type = query.message.chat.type
+        if chat_type == 'private':
+            await query.message.reply_text("Lets start submitting your fam photos! Click here: /submit_photo")
+        else:
+            await query.message.reply_text("This feature is not supported for group chats. Please ask your fam head to DM Ah Gong @uclassa_telebot to submit your photos")
     else:
         await query.message.reply_text("Invalid option selected.")
 
 # Error handler
-
 async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    print(f"Update {update} caused error {context.error}")
+    print(f"Error: {context.error}")
+    print(f"Update: {json.dumps(update.to_dict(), indent=2)}")
+
+# Check if chat is private chat
+def is_private_chat(update: Update) -> bool:
+    return update.message.chat.type == "private"
 
 # Main
-
 if __name__ == "__main__":
     app = Application.builder().token(TOKEN).build()
     job_queue = app.job_queue
     remind_event = job_queue.run_daily(event_reminder, REMINDER_TIME)
-    
+    profile_setup = ProfileSetup()
+    fam_submissions = FamSubmissions()
+
     # Commands
     app.add_handler(CommandHandler("start", start_command))
     app.add_handler(CommandHandler("help", help_command))
     
-    # Messages
-    app.add_handler(MessageHandler(filters.TEXT, handle_message))
-    
     # Callbacks for menu button clicks
     app.add_handler(CallbackQueryHandler(on_button_click))
     
+    # Profile Setup
+    FIRST_NAME = profile_setup.FIRST_NAME
+    LAST_NAME = profile_setup.LAST_NAME
+    YEAR = profile_setup.YEAR
+    MAJOR = profile_setup.MAJOR
+    BIRTHDAY_DAY = profile_setup.BIRTHDAY_DAY
+    BIRTHDAY_MONTH = profile_setup.BIRTHDAY_MONTH
+    BIRTHDAY_YEAR = profile_setup.BIRTHDAY_YEAR
+    PHOTO = profile_setup.PHOTO
+
+    app.add_handler(ConversationHandler(
+        entry_points=[
+            CommandHandler('setup_profile', profile_setup.start),
+        ],
+        states={
+            FIRST_NAME: [MessageHandler(filters.TEXT, profile_setup.save_first_name)],
+            LAST_NAME: [MessageHandler(filters.TEXT, profile_setup.save_last_name)],
+            YEAR: [MessageHandler(filters.TEXT, profile_setup.save_year)],
+            MAJOR: [MessageHandler(filters.TEXT, profile_setup.save_major)],
+            BIRTHDAY_DAY: [MessageHandler(filters.TEXT, profile_setup.save_birthday_day)],
+            BIRTHDAY_MONTH: [MessageHandler(filters.TEXT, profile_setup.save_birthday_month)],
+            BIRTHDAY_YEAR: [MessageHandler(filters.TEXT, profile_setup.save_birthday_year)],
+            PHOTO: [MessageHandler(filters.PHOTO, profile_setup.save_photo), CommandHandler('skip', profile_setup.skip_photo)],
+        },
+        fallbacks=[CommandHandler('cancel', profile_setup.cancel)])
+    )
+
+    NAME = fam_submissions.NAME
+    FAMILY = fam_submissions.FAMILY
+    FAMPHOTO = fam_submissions.FAMPHOTO
+    DESCRIPTION = fam_submissions.DESCRIPTION
+    NUMBER = fam_submissions.NUMBER
+
+
+    app.add_handler(ConversationHandler(
+        entry_points=[
+            CommandHandler('submit_photo', fam_submissions.start),
+        ],
+        states={
+            NAME: [MessageHandler(filters.TEXT, fam_submissions.save_name)],
+            FAMILY: [MessageHandler(filters.TEXT, fam_submissions.save_family)],
+            FAMPHOTO: [MessageHandler(filters.PHOTO, fam_submissions.save_famphoto)],
+            DESCRIPTION: [MessageHandler(filters.TEXT, fam_submissions.save_description)],
+            NUMBER: [MessageHandler(filters.TEXT, fam_submissions.save_number)],
+        },
+        fallbacks=[CommandHandler('cancel', fam_submissions.cancel)])
+    )
+
+
+
+    # Messages
+    app.add_handler(MessageHandler(filters.TEXT, handle_message))
+
     # Error
     app.add_error_handler(error)
     
