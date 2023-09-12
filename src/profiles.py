@@ -9,6 +9,8 @@ sys.path.append(APPLICATION_DIR)
 from backend.google_sheets import Members
 from backend.google_drive import Google_Drive
 
+MEMBER_IMAGES_FOLDER = os.environ.get("MEMBER_IMAGES_FOLDER")
+
 class ProfileSetup:
     """
     This class handles the profile setup conversation.
@@ -116,7 +118,7 @@ class ProfileSetup:
         photo_file_name = f'{update.message.from_user.id}.jpg'
         current_directory = os.getcwd()
         photo_path = os.path.join(current_directory, photo_file_name)
-        image_file_id = self.photo_upload.upload_member_image(photo_path)
+        image_file_id = self.photo_upload.upload_image(photo_path, MEMBER_IMAGES_FOLDER)
         image_formula = f'=IMAGE("https://drive.google.com/uc?export=view&id={image_file_id}")'
         image_link_formula = f'=HYPERLINK("https://drive.google.com/uc?export=view&id={image_file_id}", "Link to Image")'
         context.user_data['image_preview'] = image_formula

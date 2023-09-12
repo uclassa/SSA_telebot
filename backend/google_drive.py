@@ -7,8 +7,6 @@ from google.oauth2.service_account import Credentials
 from .service_account_loader import get_service_account_info
 
 SCOPES: final = ['https://www.googleapis.com/auth/drive']
-GROUP_IMAGES_FOLDER = os.environ.get("GROUP_IMAGES_FOLDER")
-MEMBER_IMAGES_FOLDER = os.environ.get("MEMBER_IMAGES_FOLDER")
 
 class Google_Drive():
 
@@ -34,36 +32,13 @@ class Google_Drive():
             print(f"An error occurred: {error}")
             return
 
-    # TODO: Change to upload image received by bot
-    def upload_group_image(self, image_path: str):
+    def upload_image(self, image_path: str, FOLDER_ID: str):
         """Insert new image.
         Returns : Id's of the image uploaded
         """
         print(image_path)
         try:
-            file_metadata = {'name': image_path, 'parents': [GROUP_IMAGES_FOLDER]}
-
-            media = MediaFileUpload(image_path,
-                                    mimetype='image/jpeg')
-
-            file = self.service.files().create(body=file_metadata, media_body=media,
-                                        fields='id').execute()
-            print(F'File ID: {file.get("id")}')
-
-        except HttpError as error:
-            print(F'An error occurred: {error}')
-            file = None
-        os.remove(image_path)
-        return file.get('id')
-
-    # TODO: Change to upload image received by bot
-    def upload_member_image(self, image_path: str):
-        """Insert new image.
-        Returns : Id's of the image uploaded
-        """
-
-        try:
-            file_metadata = {'name': image_path, 'parents': [MEMBER_IMAGES_FOLDER]}
+            file_metadata = {'name': image_path, 'parents': [FOLDER_ID]}
 
             media = MediaFileUpload(image_path,
                                     mimetype='image/jpeg')
