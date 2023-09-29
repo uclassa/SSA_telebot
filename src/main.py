@@ -62,7 +62,6 @@ def get_points_info() -> str:
 # Function to create the menu with options
 def create_menu(update) -> InlineKeyboardMarkup:
     keyboard = [
-        [InlineKeyboardButton("Create Profile", callback_data="setup_profile")],
         [InlineKeyboardButton("Upcoming Events", callback_data="events")],
         [InlineKeyboardButton("SSA Fams Leaderboard", callback_data="fam_points")],
         [InlineKeyboardButton("SSA Fams Photo Submissions", callback_data="submit_photo")],
