@@ -114,9 +114,9 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/help - See a list of available commands\n"
     )
     if is_private_chat(update):
-        commands += "/setup_profile - Set up your profile\n"
+        commands +=  "/submit_photo - To submit photos for your family \n/cancel - To end any ongoing conversations with the bot"
 
-    await update.message.reply_text(f"Here are our available menus:\n\n{commands}", reply_markup=reply_markup)
+    await update.message.reply_text(f"Here are our available commands:\n\n{commands} \n\nHere are our available menus:", reply_markup=reply_markup)
 
 # Message handler
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
