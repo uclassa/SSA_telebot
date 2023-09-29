@@ -28,7 +28,7 @@ class FamSubmissions:
         """
         user_id = update.message.from_user.id
         context.user_data['user_id'] = user_id
-        await update.message.reply_text("Let's submit your fam photo to Ah Gong! What's your name?")
+        await update.message.reply_text("Let's submit your fam photo to Ah Gong! What's your name?\n\nIf you wish to cancel your submission at any point of time, just send me /cancel")
         return self.NAME
 
     async def save_name(self, update: Update, context: CallbackContext) -> int:
@@ -36,10 +36,12 @@ class FamSubmissions:
         Stores the user's first name in the context dictionary.
         Asks for the user's last name then returns the integer representing the next state.
         '''
+        cancel_command = "/cancel"
+        if update.message.text.lower() == cancel_command:
+            return await self.cancel(update, context)
         context.user_data['name'] = update.message.text
         fam_options = ["Family 1", "Family 2", "Family 3", "Family 4"]
-                # Create a list of InlineKeyboardButtons for each year option
-        fam_buttons = [[InlineKeyboardButton(option, callback_data=option)] for option in fam_options]
+        fam_buttons = [[InlineKeyboardButton(fam_options[i*2 + j], callback_data=fam_options[i*2 + j]) for j in range(2)] for i in range(2)]
         await update.message.reply_text(f"Hi {context.user_data['name']}! Which family are you from?", reply_markup=ReplyKeyboardMarkup(fam_buttons, one_time_keyboard=True))
         return self.FAMILY
     
@@ -48,13 +50,18 @@ class FamSubmissions:
         Stores the user's last name in the context dictionary.
         Asks for the user's year then creates a ReplyKeyboardMarkup containing valid options.
         '''
+        cancel_command = "/cancel"
+        if update.message.text.lower() == cancel_command:
+            return await self.cancel(update, context)
         context.user_data['family'] = update.message.text
-
         await update.message.reply_text(f"Lets score some points for {context.user_data['family']} :) Send me your photo!")
         return self.FAMPHOTO
 
     # TODO: Implement way store image data before uploading to database
     async def save_famphoto(self, update: Update, context: CallbackContext) -> int:
+        cancel_command = "/cancel"
+        if update.message.text.lower() == cancel_command:
+            return await self.cancel(update, context)
         photo_file = await update.message.photo[-1].get_file()
         await update.message.reply_text(
             f"Uploading your image...(please wait for a moment)"
@@ -78,6 +85,9 @@ class FamSubmissions:
         Stores the user's last name in the context dictionary.
         Asks for the user's year then creates a ReplyKeyboardMarkup containing valid options.
         '''
+        cancel_command = "/cancel"
+        if update.message.text.lower() == cancel_command:
+            return await self.cancel(update, context)
         context.user_data['description'] = update.message.text
 
         num_buttons = [[InlineKeyboardButton(str(number), callback_data=str(number)) for number in range(3, 30)[i:i+3]] for i in range(0, 27, 3)]
@@ -90,6 +100,9 @@ class FamSubmissions:
         Stores the user's last name in the context dictionary.
         Asks for the user's year then creates a ReplyKeyboardMarkup containing valid options.
         '''
+        cancel_command = "/cancel"
+        if update.message.text.lower() == cancel_command:
+            return await self.cancel(update, context)
         context.user_data['number'] = update.message.text
         current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         context.user_data['date/time'] = current_datetime
@@ -97,7 +110,7 @@ class FamSubmissions:
         await update.message.reply_text(f"Your Fam Photos Submission for {context.user_data['family']} has been completed. Thank you {context.user_data['name']}!")
         return ConversationHandler.END
 
-    async def cancel(self, update: Update) -> int:
+    async def cancel(self, update: Update, context: CallbackContext) -> int:
         await update.message.reply_text("Fam Photos Submission canceled, Ah Gong never remember any info. Ttyl bestie.")
         return ConversationHandler.END
     
