@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 from datetime import datetime, time
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import ConversationHandler, Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
-from profiles import ProfileSetup
 from fam_submissions import FamSubmissions
 
 APPLICATION_DIR = os.path.join(os.path.dirname(__file__), '..')
@@ -62,7 +61,6 @@ def get_points_info() -> str:
 # Function to create the menu with options
 def create_menu(update) -> InlineKeyboardMarkup:
     keyboard = [
-        [InlineKeyboardButton("Create Profile", callback_data="setup_profile")],
         [InlineKeyboardButton("Upcoming Events", callback_data="events")],
         [InlineKeyboardButton("SSA Fams Leaderboard", callback_data="fam_points")],
         [InlineKeyboardButton("SSA Fams Photo Submissions", callback_data="submit_photo")],
@@ -82,7 +80,6 @@ def get_welcome_message(user) -> str:
             f"Hello {user.first_name}! 🇸🇬🎉\n\n"
             "Welcome to the Singapore Students Association at UCLA! I am Ah Gong, SSA's oldest honorary member and telebot. "
             "I provide useful information and updates for Singaporean students at UCLA.\n\n"
-            "👉 Send @uclassa_telebot a DM to sign up for a profile!\n\n"
             "📢 Use /help to see a list of available commands and explore what I can do for you.\n\n"
             "Connect with us online:\n"
             "📸 <a href='https://www.instagram.com/ucla.ssa/'>Instagram</a>\n"
@@ -115,16 +112,14 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/help - See a list of available commands\n"
     )
     if is_private_chat(update):
-        commands += "/setup_profile - Set up your profile\n"
+        commands +=  "/submit_photo - To submit photos for your family \n/cancel - To end any ongoing conversations with the bot"
 
-    await update.message.reply_text(f"Here are our available menus:\n\n{commands}", reply_markup=reply_markup)
+    await update.message.reply_text(f"Here are our available commands:\n\n{commands} \n\nHere are our available menus:", reply_markup=reply_markup)
 
 # Message handler
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message_type: str = update.message.chat.type
     text: str = update.message.text
-    
-    print(f"User ({update.message.chat.id}) in {message_type} says: {text}")
     
     if message_type == "group":
         if BOT_USERNAME in text:
@@ -191,12 +186,6 @@ async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["feedback_type"] = "ssa"
         context.user_data["state"] = "waiting_for_feedback"
         await query.message.reply_text("📫 Tell us how we can improve SSA (events, publicity, partnerships etc): \n\n")
-    elif option == "setup_profile":
-        chat_type = query.message.chat.type
-        if chat_type == 'private':
-            await query.message.reply_text("Lets start creating your profile! Click here: /setup_profile")
-        else:
-            await query.message.reply_text("This feature is not supported for group chats. Please DM Ah Gong @uclassa_telebot to create your profile")
     elif option == "submit_photo":
         chat_type = query.message.chat.type
         if chat_type == 'private':
@@ -220,7 +209,6 @@ if __name__ == "__main__":
     app = Application.builder().token(TOKEN).build()
     job_queue = app.job_queue
     remind_event = job_queue.run_daily(event_reminder, REMINDER_TIME)
-    profile_setup = ProfileSetup()
     fam_submissions = FamSubmissions()
 
     # Commands
@@ -229,33 +217,6 @@ if __name__ == "__main__":
     
     # Callbacks for menu button clicks
     app.add_handler(CallbackQueryHandler(on_button_click))
-    
-    # Profile Setup
-    FIRST_NAME = profile_setup.FIRST_NAME
-    LAST_NAME = profile_setup.LAST_NAME
-    YEAR = profile_setup.YEAR
-    MAJOR = profile_setup.MAJOR
-    BIRTHDAY_DAY = profile_setup.BIRTHDAY_DAY
-    BIRTHDAY_MONTH = profile_setup.BIRTHDAY_MONTH
-    BIRTHDAY_YEAR = profile_setup.BIRTHDAY_YEAR
-    PHOTO = profile_setup.PHOTO
-
-    app.add_handler(ConversationHandler(
-        entry_points=[
-            CommandHandler('setup_profile', profile_setup.start),
-        ],
-        states={
-            FIRST_NAME: [MessageHandler(filters.TEXT, profile_setup.save_first_name)],
-            LAST_NAME: [MessageHandler(filters.TEXT, profile_setup.save_last_name)],
-            YEAR: [MessageHandler(filters.TEXT, profile_setup.save_year)],
-            MAJOR: [MessageHandler(filters.TEXT, profile_setup.save_major)],
-            BIRTHDAY_DAY: [MessageHandler(filters.TEXT, profile_setup.save_birthday_day)],
-            BIRTHDAY_MONTH: [MessageHandler(filters.TEXT, profile_setup.save_birthday_month)],
-            BIRTHDAY_YEAR: [MessageHandler(filters.TEXT, profile_setup.save_birthday_year)],
-            PHOTO: [MessageHandler(filters.PHOTO, profile_setup.save_photo), CommandHandler('skip', profile_setup.skip_photo)],
-        },
-        fallbacks=[CommandHandler('cancel', profile_setup.cancel)])
-    )
 
     NAME = fam_submissions.NAME
     FAMILY = fam_submissions.FAMILY
