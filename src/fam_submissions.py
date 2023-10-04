@@ -60,7 +60,7 @@ class FamSubmissions:
     # TODO: Implement way store image data before uploading to database
     async def save_famphoto(self, update: Update, context: CallbackContext) -> int:
         cancel_command = "/cancel"
-        if update.message.text.lower() == cancel_command:
+        if update.message.text and update.message.text.lower() == cancel_command:
             return await self.cancel(update, context)
         photo_file = await update.message.photo[-1].get_file()
         await update.message.reply_text(
@@ -78,6 +78,7 @@ class FamSubmissions:
         await update.message.reply_text(
             f"Thank you for your patience! Upload Completed! Describe your photo/event:"
         )
+        os.remove(photo_path)
         return self.DESCRIPTION
 
     async def save_description(self, update: Update, context: CallbackContext) -> int:
