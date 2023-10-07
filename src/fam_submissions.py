@@ -91,7 +91,7 @@ class FamSubmissions:
             return await self.cancel(update, context)
         context.user_data['description'] = update.message.text
 
-        num_buttons = [[InlineKeyboardButton(str(number), callback_data=str(number)) for number in range(3, 30)[i:i+3]] for i in range(0, 27, 3)]
+        num_buttons = [[InlineKeyboardButton(str(number), callback_data=str(number)) for number in range(1, 30)[i:i+3]] for i in range(0, 29, 3)]
 
         await update.message.reply_text(f"Brilliant! Hope your family had a great time with each other, how many people from your family attended this event? (only indicate the number of people from your own family, if a group from another family is present, they would have to submit their own photo)", reply_markup=ReplyKeyboardMarkup(num_buttons, one_time_keyboard=True))
         return self.NUMBER
