@@ -106,7 +106,7 @@ class FamSubmissions:
         if update.message.text.lower() == cancel_command:
             return await self.cancel(update, context)
         if update.message.text.isdigit() and int(update.message.text) in range(1, 30):
-            context.user_data['family'] = update.message.text
+            context.user_data['number'] = update.message.text
         await update.message.reply_text(f"Lets score some points for {context.user_data['family']} :) Send me your photo!", reply_markup=ReplyKeyboardRemove())
         context.user_data['number'] = update.message.text
         current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
