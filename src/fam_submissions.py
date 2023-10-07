@@ -118,11 +118,11 @@ class FamSubmissions:
         else:
             score +=0
 
+        if numberofpeople > 3:
+            numberofpeople = numberofpeople*1.5
+
         score += numberofpeople*5
 
-        if numberofpeople > 3:
-            score = score*1.5
-        
         context.user_data['score'] = score
 
         await self._store_profile_in_database(update, context.user_data)
