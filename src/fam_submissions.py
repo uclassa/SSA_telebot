@@ -90,7 +90,8 @@ class FamSubmissions:
         cancel_command = "/cancel"
         if update.message.text.lower() == cancel_command:
             return await self.cancel(update, context)
-        context.user_data['description'] = update.message.text
+        if update.message.text in ["On-Campus", "Off-Campus"]:
+            context.user_data['description'] = update.message.text
 
         num_buttons = [[InlineKeyboardButton(str(number), callback_data=str(number)) for number in range(1, 30)[i:i+3]] for i in range(0, 29, 3)]
 
@@ -107,8 +108,6 @@ class FamSubmissions:
             return await self.cancel(update, context)
         if update.message.text.isdigit() and int(update.message.text) in range(1, 30):
             context.user_data['number'] = update.message.text
-        await update.message.reply_text(f"Lets score some points for {context.user_data['family']} :) Send me your photo!", reply_markup=ReplyKeyboardRemove())
-        context.user_data['number'] = update.message.text
         current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         context.user_data['date/time'] = current_datetime
         
