@@ -2,7 +2,7 @@ import os
 import sys
 
 from datetime import datetime
-from telegram import Update, InlineKeyboardButton, ReplyKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import ConversationHandler, CallbackContext
 
 APPLICATION_DIR = os.path.join(os.path.dirname(__file__), '..')
@@ -40,7 +40,7 @@ class FamSubmissions:
         if update.message.text.lower() == cancel_command:
             return await self.cancel(update, context)
         context.user_data['name'] = update.message.text
-        fam_options = ["Family 1", "Family 2", "Family 3", "Family 4"]
+        fam_options = ["North-South Line", "Circle Line", "Downtown Line", "East-West Line"]
         fam_buttons = [[InlineKeyboardButton(fam_options[i*2 + j], callback_data=fam_options[i*2 + j]) for j in range(2)] for i in range(2)]
         await update.message.reply_text(f"Hi {context.user_data['name']}! Which family are you from?", reply_markup=ReplyKeyboardMarkup(fam_buttons, one_time_keyboard=True))
         return self.FAMILY
@@ -53,8 +53,9 @@ class FamSubmissions:
         cancel_command = "/cancel"
         if update.message.text.lower() == cancel_command:
             return await self.cancel(update, context)
-        context.user_data['family'] = update.message.text
-        await update.message.reply_text(f"Lets score some points for {context.user_data['family']} :) Send me your photo!")
+        if update.message.text in ["North-South Line", "Circle Line", "Downtown Line", "East-West Line"]:
+            context.user_data['family'] = update.message.text
+        await update.message.reply_text(f"Lets score some points for {context.user_data['family']} :) Send me your photo!", reply_markup=ReplyKeyboardRemove())
         return self.FAMPHOTO
 
     # TODO: Implement way store image data before uploading to database
@@ -75,9 +76,9 @@ class FamSubmissions:
         image_link_formula = f'=HYPERLINK("https://drive.google.com/uc?export=view&id={image_file_id}", "Link to Image")'
         context.user_data['image_preview'] = image_formula
         context.user_data['image_link'] = image_link_formula
-        await update.message.reply_text(
-            f"Thank you for your patience! Upload Completed! Describe your photo/event:"
-        )
+        location_options = ["On-Campus", "Off-Campus"]
+        location_buttons = [[InlineKeyboardButton(location_options[j], callback_data=location_options[j])] for j in range(2)]
+        await update.message.reply_text(f"Was your photo taken off-campus or on-campus? (hill is considered on-campus btw)", reply_markup=ReplyKeyboardMarkup(location_buttons, one_time_keyboard=True))
         os.remove(photo_path)
         return self.DESCRIPTION
 
@@ -89,11 +90,12 @@ class FamSubmissions:
         cancel_command = "/cancel"
         if update.message.text.lower() == cancel_command:
             return await self.cancel(update, context)
-        context.user_data['description'] = update.message.text
+        if update.message.text in ["On-Campus", "Off-Campus"]:
+            context.user_data['description'] = update.message.text
 
-        num_buttons = [[InlineKeyboardButton(str(number), callback_data=str(number)) for number in range(3, 30)[i:i+3]] for i in range(0, 27, 3)]
+        num_buttons = [[InlineKeyboardButton(str(number), callback_data=str(number)) for number in range(1, 30)[i:i+3]] for i in range(0, 29, 3)]
 
-        await update.message.reply_text(f"Brilliant! Hope your family had a great time with each other, how many people from your family attended this event?", reply_markup=ReplyKeyboardMarkup(num_buttons, one_time_keyboard=True))
+        await update.message.reply_text(f"Brilliant! Hope your family had a great time with each other, how many people from your family attended this event? (only indicate the number of people from your own family, if a group from another family is present, they would have to submit their own photo)", reply_markup=ReplyKeyboardMarkup(num_buttons, one_time_keyboard=True))
         return self.NUMBER
 
     async def save_number(self, update: Update, context: CallbackContext) -> int:
@@ -104,9 +106,28 @@ class FamSubmissions:
         cancel_command = "/cancel"
         if update.message.text.lower() == cancel_command:
             return await self.cancel(update, context)
-        context.user_data['number'] = update.message.text
+        if update.message.text.isdigit() and int(update.message.text) in range(1, 30):
+            context.user_data['number'] = update.message.text
         current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         context.user_data['date/time'] = current_datetime
+        
+        numberofpeople = int(context.user_data['number'])
+        location = context.user_data['description']
+        score = 0
+        if location == "On-Campus":
+            score += 10
+        elif location == "Off-Campus":
+            score += 20
+        else:
+            score +=0
+
+        if numberofpeople > 3:
+            numberofpeople = numberofpeople*1.5
+
+        score += numberofpeople*5
+
+        context.user_data['score'] = score
+
         await self._store_profile_in_database(update, context.user_data)
         await update.message.reply_text(f"Your Fam Photos Submission for {context.user_data['family']} has been completed. Thank you {context.user_data['name']}!")
         return ConversationHandler.END
@@ -114,6 +135,8 @@ class FamSubmissions:
     async def cancel(self, update: Update, context: CallbackContext) -> int:
         await update.message.reply_text("Fam Photos Submission canceled, Ah Gong never remember any info. Ttyl bestie.")
         return ConversationHandler.END
+    
+
     
     async def _store_profile_in_database(self, update, submission_data):
         try:
