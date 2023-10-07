@@ -107,6 +107,24 @@ class FamSubmissions:
         context.user_data['number'] = update.message.text
         current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         context.user_data['date/time'] = current_datetime
+        
+        numberofpeople = int(context.user_data['number'])
+        location = context.user_data['description']
+        score = 0
+        if location == "On-Campus":
+            score += 10
+        elif location == "Off-Campus":
+            score += 20
+        else:
+            score +=0
+
+        score += numberofpeople*5
+
+        if numberofpeople > 3:
+            score = score*1.5
+        
+        context.user_data['score'] = score
+
         await self._store_profile_in_database(update, context.user_data)
         await update.message.reply_text(f"Your Fam Photos Submission for {context.user_data['family']} has been completed. Thank you {context.user_data['name']}!")
         return ConversationHandler.END
@@ -114,6 +132,8 @@ class FamSubmissions:
     async def cancel(self, update: Update, context: CallbackContext) -> int:
         await update.message.reply_text("Fam Photos Submission canceled, Ah Gong never remember any info. Ttyl bestie.")
         return ConversationHandler.END
+    
+
     
     async def _store_profile_in_database(self, update, submission_data):
         try:
