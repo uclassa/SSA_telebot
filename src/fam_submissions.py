@@ -2,7 +2,7 @@ import os
 import sys
 
 from datetime import datetime
-from telegram import Update, InlineKeyboardButton, ReplyKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import ConversationHandler, CallbackContext
 
 APPLICATION_DIR = os.path.join(os.path.dirname(__file__), '..')
@@ -53,8 +53,9 @@ class FamSubmissions:
         cancel_command = "/cancel"
         if update.message.text.lower() == cancel_command:
             return await self.cancel(update, context)
-        context.user_data['family'] = update.message.text
-        await update.message.reply_text(f"Lets score some points for {context.user_data['family']} :) Send me your photo!")
+        if update.message.text in ["North-South Line", "Circle Line", "Downtown Line", "East-West Line"]:
+            context.user_data['family'] = update.message.text
+        await update.message.reply_text(f"Lets score some points for {context.user_data['family']} :) Send me your photo!", reply_markup=ReplyKeyboardRemove())
         return self.FAMPHOTO
 
     # TODO: Implement way store image data before uploading to database
@@ -104,6 +105,9 @@ class FamSubmissions:
         cancel_command = "/cancel"
         if update.message.text.lower() == cancel_command:
             return await self.cancel(update, context)
+        if update.message.text.isdigit() and int(update.message.text) in range(1, 30):
+            context.user_data['family'] = update.message.text
+        await update.message.reply_text(f"Lets score some points for {context.user_data['family']} :) Send me your photo!", reply_markup=ReplyKeyboardRemove())
         context.user_data['number'] = update.message.text
         current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         context.user_data['date/time'] = current_datetime
