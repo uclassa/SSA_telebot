@@ -9,7 +9,8 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
-from google.oauth2.credentials import Credentials
+from google.oauth2.service_account import Credentials
+from .service_account_loader import get_service_account_info
 
 
 # Load environment variables from ./../config.env
@@ -29,19 +30,22 @@ DAY_CUTOFF: final = constants['DAY_CUTOFF']
 class Google_Sheets(ABC):
     
     def __init__(self, spreadsheet_id, range_name="A:B"):
+        """Interface for Google Sheets API. Create a subclass to implement methods needed for each sheet.
+
+        Args:
+            spreadsheet_id (str): id of the spreadsheet
+            range_name (str, optional): name of the sheet. Defaults to "A:B".
+
+        Raises:
+            ValueError: [description]
+            HttpError: [description]
+        """
+        
         creds = None
         self.spreadsheet_id = spreadsheet_id
         self.range_name = range_name
-        
-        creds = Credentials.from_authorized_user_info(
-            info={
-                "refresh_token": os.environ.get('google_refresh_token'),
-                "client_id": os.environ.get('google_client_id'),
-                "client_secret": os.environ.get('google_client_secret'),
-                "token_uri": os.environ.get('google_token_uri'),
-            },
-            scopes=SCOPES
-        )
+
+        creds = Credentials.from_service_account_info(get_service_account_info(), scopes=SCOPES)
         
         try:
             service = build('sheets', 'v4', credentials=creds)
@@ -54,9 +58,8 @@ class Google_Sheets(ABC):
             self.values = {}
             for row in rows[1:]:
                 if row[0] not in self.values:
-                    self.values[int(row[0])] = row[1:]
-                else:
-                    raise ValueError("Duplicate key found")
+                    self.values[row[0]] = row[1:]
+                
         except ValueError as error:
             print(f"An error occurred: {error}")
             return
@@ -64,12 +67,13 @@ class Google_Sheets(ABC):
             print(f"An error occurred: {error}")
             return
         
-        
     def refreshRead(self):
+        """Must be called before every read operation to refresh the values stored in the object.
+        """
         result = self.sheet_object.get(spreadsheetId=self.spreadsheet_id, range=self.range_name).execute()
         rows = result.get('values', [])
         for row in rows[1:]:
-            self.values[int(row[0])] = row[1:]
+            self.values[row[0]] = row[1:]
     
     
     @abstractmethod
@@ -80,16 +84,57 @@ class Google_Sheets(ABC):
 class Members(Google_Sheets):
     def __init__(self, sheet_id=SHEET_ID):
         super().__init__(spreadsheet_id=sheet_id, range_name="Members")
-    
+
+    def add_member(self, member):
+        """Adds a member to the sheet
+
+        Args:
+            member (Member): Member object to be added to the sheet
+        """
+        self.refreshRead()
+        if not member['user_id'] in self.values:
+            # TODO: Include reference photo
+            self.values[member['user_id']] = [member['first_name'], member['last_name'], member['year'], member['major'], member['birthday'], member['image_preview'], member['image_link']]
+            
+            try:
+                body = {
+                    'values': [[member['user_id'], member['first_name'], member['last_name'], member['year'], member['major'], member['birthday'], member['image_preview'], member['image_link']]]
+                }
+                result = self.sheet_object.append(
+                    spreadsheetId=self.spreadsheet_id, 
+                    range=self.range_name, 
+                    valueInputOption='USER_ENTERED', 
+                    body=body
+                ).execute()
+
+                print(f"{result.get('updates').get('updatedCells')} cells appended.")
+            except HttpError as error:
+                print(f"An error occurred: {error}")
+                return
+        else:
+            print("Member already exists in the sheet")
+            return
     
     def get(self):
         self.refreshRead()
         return(self.values)
+    
+    def is_member(self, user_id):
+        """Checks if user_id is in the sheet
 
+        Args:
+            user_id (int): id of telegram user
+
+        Returns:
+            bool: True if user_id is in the sheet, False otherwise
+        """
+        members = self.get()
+        return members.get(str(user_id)) != None
 
 class Events(Google_Sheets):
-    def __init__(self, sheet_id=SHEET_ID):
+    def __init__(self, sheet_id=SHEET_ID, current_date=datetime.now().date()):
         super().__init__(spreadsheet_id=sheet_id, range_name="Events")
+        self.current_date = current_date
         
         
     def get(self):
@@ -98,6 +143,15 @@ class Events(Google_Sheets):
     
     
     def parseDateTime(self, values):
+        """AI is creating summary for parseDateTime
+        
+
+        Args:
+            values (list): cell values from the sheet (name, start_date, end_date, start_time, end_time, location)
+
+        Returns:
+            str: message to be displayed as "START_DATE START_TIME - END_DATE END_TIME"
+        """
         start_date_raw, end_date_raw, start_time_raw, end_time_raw = values
         input_time_format='%I:%M:%S %p'
         output_time_short_format='%I%p'
@@ -119,13 +173,19 @@ class Events(Google_Sheets):
         return message
     
     
-    def generateReply(self, current_date):
+    def generateReply(self):
+        """Prints up to MAX_EVENTS no. of upcoming events
+
+        Args:
+
+        Returns:
+            str: message to be displayed by the bot
+        """
         self.refreshRead()
-        reply = '🎈 <u>Here are the upcoming events</u> 🎈\n\n'
+        reply = '🎈 Upcoming events 🎈\n\n'
         count = 0
         for _, value in self.values.items():
-            # value: name, start_date, end_date, start_time, end_time, location
-            if self.getDayDiff(current_date, value[1]) > 0:
+            if self.getDayDiff(value[1]) > 0:
                 reply += '<b>' + value[0] + '</b> @ ' + value[5] + '\n'
                 parsedDateTime = self.parseDateTime(value[1:5])
                 if not parsedDateTime == '':
@@ -138,20 +198,33 @@ class Events(Google_Sheets):
         return reply
     
     
-    def getDayDiff(self, current_date, start_date_str):
+    def getDayDiff(self, start_date_str):
+        """Returns the number of days between current_date and start_date_str
+
+        Args:
+            start_date_str (datetime): [description]
+
+        Returns:
+            int: no. of days between current_date and start_date_str
+        """
         start_date = datetime.strptime(start_date_str, '%m/%d/%y').date()
-        timedelta = start_date - current_date
+        timedelta = start_date - self.current_date
         datedelta = timedelta.days
         return datedelta
     
     
-    def generateReminder(self, current_date):
+    def generateReminder(self):
+        """Prints events that are upcoming in DAY_CUTOFF days
+
+        Returns:
+            str: message to be displayed by the bot
+        """
         self.refreshRead()
         hasUpcomingEvent = False
         reminder = f'❗Reminder❗\nThere are events upcoming in {DAY_CUTOFF} days:\n'
         for _, value in self.values.items():
-            day_diff = self.getDayDiff(current_date, value[1])
-            if day_diff > 0 and day_diff == DAY_CUTOFF:
+            day_diff = self.getDayDiff(value[1])
+            if day_diff >= 0 and day_diff == DAY_CUTOFF:
                 hasUpcomingEvent = True
                 reminder += ( value[0]          # Event name
                     + ' @ ' + value[5]          # Event location
@@ -164,7 +237,14 @@ class Events(Google_Sheets):
 
 
 class GroupIDs(Google_Sheets):
-    def __init__(self, sheet_id=SHEET_ID):
+    def __init__(self, sheet_id=SHEET_ID, dev_mode=False):
+        """Initialize GroupIDs object
+
+        Args:
+            sheet_id (str, optional): id of the spreadsheet. Defaults to SHEET_ID.
+            dev_mode (bool, optional): determines the list of id to return. Defaults to False.
+        """
+        self.dev_mode = dev_mode
         super().__init__(spreadsheet_id=sheet_id, range_name="Group IDs")
     
     
@@ -174,6 +254,14 @@ class GroupIDs(Google_Sheets):
     
     
     def addOrUpdateGroup(self, group_id, group_name):
+        """Checks if this group_id already exists in the sheet. 
+        If not, add it to the sheet. 
+        TODO: If yes, update the group name if it changed from what was known.
+
+        Args:
+            group_id (str): id of telegram group
+            group_name (str): name of telegram group
+        """
         self.refreshRead()
         if not group_id in self.values:
             # update the sheet with new id
@@ -199,17 +287,112 @@ class GroupIDs(Google_Sheets):
     
     
     def getGroupIDs(self):
+        """Returns the list of group_id in the sheet
+        If dev_mode is True, return the first group_id in the sheet (dev group)
+        Else return the rest of the group_id in the sheet (prod groups)
+        
+        Returns:
+            list: list of group_id in the sheet
+        """
         self.refreshRead()
-        return(self.values.keys())
+        group_ids = list(self.values.keys())
+        return(group_ids[0] if self.dev_mode else group_ids[1:])
+    
 
+class Feedback(Google_Sheets):
+    def __init__(self, sheet_id=SHEET_ID):
+        super().__init__(spreadsheet_id=sheet_id, range_name="Feedback")
+
+    def addFeedback(self, feedback):
+        # Extract relevant information from the feedback
+        feedback_from = ''
+        message = ''
+
+        lines = feedback.split('\n')
+        feedback_type = lines[0]
+        for line in lines:
+            if line.startswith('Feedback From:'):
+                feedback_from = line[len('Feedback From:'):].strip()
+            elif line.startswith('Message:'):
+                message = line[len('Message:'):].strip()
+
+        # Get the current date and time
+        current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        # Find the next available row
+        self.refreshRead()
+        last_row = len(self.values) + 1
+
+        # Prepare the feedback data to be appended to the sheet
+        feedback_data = [[feedback_type, current_datetime, feedback_from, message]]
+
+        # Append the feedback data to the next available row
+        range_name = f"{self.range_name}!A{last_row}"
+        request_body = {
+            'values': feedback_data
+        }
+
+        try:
+            result = self.sheet_object.append(
+                spreadsheetId=self.spreadsheet_id,
+                range=range_name,
+                valueInputOption='USER_ENTERED',
+                body=request_body
+            ).execute()
+            print(f"{result.get('updates').get('updatedCells')} cells appended.")
+            return True
+        except Exception as e:
+            print(f"An error occurred while appending rows: {e}")
+            return False
+    
+    
+    def get(self):
+        self.refreshRead()
+        return(self.values)
+
+class Submissions(Google_Sheets):
+    def __init__(self, sheet_id=SHEET_ID, current_date=datetime.now().date()):
+        super().__init__(spreadsheet_id=sheet_id, range_name="Submissions")
+        self.current_date = current_date
+
+    def add_submission(self, submission):
+        """Adds a member to the sheet
+
+        Args:
+            member (Member): Member object to be added to the sheet
+        """
+        self.refreshRead()
+        # TODO: Include reference photo
+        self.values[submission['user_id']] = [submission['date/time'], submission['name'], submission['family'], submission['description'], submission['number'], submission['image_preview'], submission['image_link'], submission['score']]
+        
+        try:
+            body = {
+                'values': [[submission['date/time'], submission['user_id'], submission['name'], submission['family'], submission['description'], submission['number'], submission['image_preview'], submission['image_link'], submission['score']]]
+            }
+            result = self.sheet_object.append(
+                spreadsheetId=self.spreadsheet_id, 
+                range=self.range_name, 
+                valueInputOption='USER_ENTERED', 
+                body=body
+            ).execute()
+
+            print(f"{result.get('updates').get('updatedCells')} cells appended.")
+        except HttpError as error:
+            print(f"An error occurred: {error}")
+            return
+    
+    def get(self):
+        self.refreshRead()
+        return(self.values)
+    
 
 # if __name__ == '__main__':
     # members = Members()
     # members.get()
     # events = Events()
     # events.get()
-    # print(events.generateReply(datetime.now().date()))
-    # print(events.generateReminder(datetime.now().date()))
-    # group_ids = GroupIDs()
-    # group_ids.addOrUpdateGroup(123456789, "Test Group")
+    # print(events.generateReply())
+    # print(events.generateReminder())
+    # group_ids = GroupIDs(dev_mode=True)
+    # print(group_ids.getGroupIDs())
     
