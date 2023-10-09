@@ -391,7 +391,7 @@ class Leaderboard(Google_Sheets):
         
     def showLeaderboard(self):
         self.refreshRead()
-        sorted_name_scores = list(sorted(self.values.items(), key=lambda x: int(x[1][0]), reverse=True))
+        sorted_name_scores = list(sorted(self.values.items(), key=lambda x: float(x[1][0]), reverse=True))
             
         result = "🏅 SSA Fams Leaderboard 🏅\n\n" + \
                  f"1st place: {sorted_name_scores[0][0]} with {sorted_name_scores[0][1][0]} points\n" + \
