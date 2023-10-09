@@ -21,10 +21,10 @@ load_dotenv(dotenv_path)
 TOKEN: final = os.environ.get("TOKEN")
 BOT_USERNAME: final = os.environ.get("BOT_USERNAME")
 ADMIN_GRP: final = os.environ.get("ADMIN_GRP")
-sg_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
-REMINDER_TIME: final = time(8, 0, 0, tzinfo=sg_timezone)
+timezone = pytz.timezone(os.environ.get("TIMEZONE"))
+REMINDER_TIME: final = time(8, 0, 0, tzinfo=timezone)
 
-events = Events(current_date=datetime.now(sg_timezone).date())
+events = Events(current_date=datetime.now(timezone).date())
 members = Members()
 group_ids = GroupIDs(dev_mode=False)
 feedback_sheet = Feedback()
@@ -34,12 +34,13 @@ fam_sheet = Submissions()
 async def event_reminder(context: ContextTypes.DEFAULT_TYPE):
     reminder = events.generateReminder()
     if reminder:
-        if group_ids.getGroupIDs().__class__ == int:
-            await context.bot.send_message(chat_id=group_ids.getGroupIDs(), text=reminder)
-        else:
+        if group_ids.getGroupIDs().__class__ == list:
             for chat_id in group_ids.getGroupIDs():
+                print(chat_id)
                 await context.bot.send_message(chat_id=chat_id, text=reminder)
-    
+        else:
+            await context.bot.send_message(chat_id=group_ids.getGroupIDs(), text=reminder)
+
 
 # Function to get upcoming events
 def get_upcoming_events() -> str:
@@ -210,7 +211,8 @@ if __name__ == "__main__":
     job_queue = app.job_queue
     remind_event = job_queue.run_daily(event_reminder, REMINDER_TIME)
     fam_submissions = FamSubmissions()
-
+    print(group_ids.getGroupIDs())
+    
     # Commands
     app.add_handler(CommandHandler("start", start_command))
     app.add_handler(CommandHandler("help", help_command))

@@ -296,7 +296,7 @@ class GroupIDs(Google_Sheets):
         """
         self.refreshRead()
         group_ids = list(self.values.keys())
-        return(group_ids[0] if self.dev_mode else group_ids[1:])
+        return(group_ids[0:2] if self.dev_mode else group_ids[1:])
     
 
 class Feedback(Google_Sheets):
