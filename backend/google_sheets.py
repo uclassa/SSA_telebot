@@ -385,6 +385,23 @@ class Submissions(Google_Sheets):
         self.refreshRead()
         return(self.values)
     
+class Leaderboard(Google_Sheets):
+    def __init__(self, sheet_id=SHEET_ID):
+        super().__init__(spreadsheet_id=sheet_id, range_name="Submissions!L1:M5")
+        
+    def showLeaderboard(self):
+        sorted_name_scores = list(sorted(self.values.items(), key=lambda x: int(x[1][0]), reverse=True))
+            
+        result = "🏅 SSA Fams Leaderboard 🏅\n\n" + \
+                 f"1st place: {sorted_name_scores[0][0]} with {sorted_name_scores[0][1][0]} points\n" + \
+                 f"2nd place: {sorted_name_scores[1][0]} with {sorted_name_scores[1][1][0]} points\n" + \
+                 f"3rd place: {sorted_name_scores[2][0]} with {sorted_name_scores[2][1][0]} points\n" + \
+                 f"4th place: {sorted_name_scores[3][0]} with {sorted_name_scores[3][1][0]} points\n"
+        return(result)
+        
+    def get(self):
+        self.refreshRead()
+        return(self.values)
 
 # if __name__ == '__main__':
     # members = Members()

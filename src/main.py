@@ -12,7 +12,7 @@ from fam_submissions import FamSubmissions
 
 APPLICATION_DIR = os.path.join(os.path.dirname(__file__), '..')
 sys.path.append(APPLICATION_DIR)
-from backend.google_sheets import Members, Events, GroupIDs, Feedback, Submissions
+from backend.google_sheets import Members, Events, GroupIDs, Feedback, Submissions, Leaderboard
 
 # Load environment variables from ./../config.env
 dotenv_path = os.path.join(APPLICATION_DIR, 'config.env')
@@ -29,7 +29,7 @@ members = Members()
 group_ids = GroupIDs(dev_mode=False)
 feedback_sheet = Feedback()
 fam_sheet = Submissions()
-
+leaderboard = Leaderboard()
 
 async def event_reminder(context: ContextTypes.DEFAULT_TYPE):
     reminder = events.generateReminder()
@@ -51,13 +51,9 @@ def get_upcoming_events() -> str:
 # Function to get points information
 def get_points_info() -> str:
     '''
-    TODO:
     Queries the Master sheet for fam points information and returns a string containing the leaderboard.
-    
-    Contains dummy data for now.
     '''
-    return ("🏅 SSA Fams Leaderboard 🏅\n" 
-           "            ~coming soon~     \n")
+    return (leaderboard.showLeaderboard())
 
 # Function to create the menu with options
 def create_menu(update) -> InlineKeyboardMarkup:
