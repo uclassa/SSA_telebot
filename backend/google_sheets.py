@@ -390,6 +390,7 @@ class Leaderboard(Google_Sheets):
         super().__init__(spreadsheet_id=sheet_id, range_name="Submissions!L1:M5")
         
     def showLeaderboard(self):
+        self.refreshRead()
         sorted_name_scores = list(sorted(self.values.items(), key=lambda x: int(x[1][0]), reverse=True))
             
         result = "🏅 SSA Fams Leaderboard 🏅\n\n" + \
