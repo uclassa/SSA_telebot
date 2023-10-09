@@ -188,7 +188,7 @@ async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if chat_type == 'private':
             await query.message.reply_text("Lets start submitting your fam photos! Click here: /submit_photo")
         else:
-            await query.message.reply_text("This feature is not supported for group chats. Please ask your fam head to DM Ah Gong @uclassa_telebot to submit your photos")
+            await query.message.reply_text("This feature is not supported for group chats. Please DM Ah Gong @uclassa_telebot to submit your photos")
     else:
         await query.message.reply_text("Invalid option selected.")
 
