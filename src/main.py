@@ -24,7 +24,7 @@ ADMIN_GRP: final = os.environ.get("ADMIN_GRP")
 timezone = pytz.timezone(os.environ.get("TIMEZONE"))
 REMINDER_TIME: final = time(8, 0, 0, tzinfo=timezone)
 
-events = Events(current_date=datetime.now(timezone).date())
+events = Events()
 members = Members()
 group_ids = GroupIDs(dev_mode=False)
 feedback_sheet = Feedback()

@@ -3,6 +3,7 @@ from __future__ import print_function
 import os
 import re
 import yaml
+import pytz
 from abc import ABC, abstractmethod
 from typing import final
 from datetime import datetime, timedelta
@@ -26,6 +27,7 @@ with open('const.yml', 'r') as file:
 SCOPES: final = constants['API']['SCOPES']
 MAX_EVENTS: final = constants['MAX_EVENTS']
 DAY_CUTOFF: final = constants['DAY_CUTOFF']
+timezone = pytz.timezone(os.environ.get("TIMEZONE"))
 
 class Google_Sheets(ABC):
     
@@ -132,9 +134,8 @@ class Members(Google_Sheets):
         return members.get(str(user_id)) != None
 
 class Events(Google_Sheets):
-    def __init__(self, sheet_id=SHEET_ID, current_date=datetime.now().date()):
+    def __init__(self, sheet_id=SHEET_ID):
         super().__init__(spreadsheet_id=sheet_id, range_name="Events")
-        self.current_date = current_date
         
         
     def get(self):
@@ -185,7 +186,7 @@ class Events(Google_Sheets):
         reply = '🎈 Upcoming events 🎈\n\n'
         count = 0
         for _, value in self.values.items():
-            if self.getDayDiff(value[1]) > 0:
+            if self.getDayDiffFromToday(value[1]) > 0:
                 reply += '<b>' + value[0] + '</b> @ ' + value[5] + '\n'
                 parsedDateTime = self.parseDateTime(value[1:5])
                 if not parsedDateTime == '':
@@ -198,7 +199,7 @@ class Events(Google_Sheets):
         return reply
     
     
-    def getDayDiff(self, start_date_str):
+    def getDayDiffFromToday(self, start_date_str):
         """Returns the number of days between current_date and start_date_str
 
         Args:
@@ -208,7 +209,7 @@ class Events(Google_Sheets):
             int: no. of days between current_date and start_date_str
         """
         start_date = datetime.strptime(start_date_str, '%m/%d/%y').date()
-        timedelta = start_date - self.current_date
+        timedelta = start_date - datetime.now(timezone).date()
         datedelta = timedelta.days
         return datedelta
     
@@ -223,7 +224,7 @@ class Events(Google_Sheets):
         hasUpcomingEvent = False
         reminder = f'❗Reminder❗\nThere are events upcoming in {DAY_CUTOFF} days:\n'
         for _, value in self.values.items():
-            day_diff = self.getDayDiff(value[1])
+            day_diff = self.getDayDiffFromToday(value[1])
             if day_diff >= 0 and day_diff == DAY_CUTOFF:
                 hasUpcomingEvent = True
                 reminder += ( value[0]          # Event name
