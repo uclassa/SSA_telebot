@@ -398,7 +398,8 @@ class Leaderboard(Google_Sheets):
                  f"1st place: {sorted_name_scores[0][0]} with {sorted_name_scores[0][1][0]} points\n" + \
                  f"2nd place: {sorted_name_scores[1][0]} with {sorted_name_scores[1][1][0]} points\n" + \
                  f"3rd place: {sorted_name_scores[2][0]} with {sorted_name_scores[2][1][0]} points\n" + \
-                 f"4th place: {sorted_name_scores[3][0]} with {sorted_name_scores[3][1][0]} points\n"
+                 f"4th place: {sorted_name_scores[3][0]} with {sorted_name_scores[3][1][0]} points\n" + \
+                 "\n<i>all submissions will be vetted according to our guidelines listed <a href='https://docs.google.com/document/d/1JzZfbjpELkSnGeY4OaAT8pu13z3IuU-HdcVGitYs77M/edit?usp=sharing'>here</a></i>"
         return(result)
         
     def get(self):

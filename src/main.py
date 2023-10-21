@@ -161,7 +161,7 @@ async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if option == "events":
         await query.message.reply_text(get_upcoming_events(), parse_mode="HTML")
     elif option == "fam_points":
-        await query.message.reply_text(get_points_info())
+        await query.message.reply_text(get_points_info(), disable_web_page_preview=True, parse_mode= "HTML")
     elif option == "feedback":
         chat_type = query.message.chat.type
         if chat_type == 'private':
@@ -186,7 +186,7 @@ async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif option == "submit_photo":
         chat_type = query.message.chat.type
         if chat_type == 'private':
-            await query.message.reply_text("Lets start submitting your fam photos! Click here: /submit_photo")
+            await query.message.reply_text("Lets start submitting your fam photos! Click here: /submit_photo \n\n<i>note: all submissions will be vetted according to our guidelines listed <a href='https://docs.google.com/document/d/1JzZfbjpELkSnGeY4OaAT8pu13z3IuU-HdcVGitYs77M/edit?usp=sharing'>here</a></i>", disable_web_page_preview=True, parse_mode= "HTML")
         else:
             await query.message.reply_text("This feature is not supported for group chats. Please DM Ah Gong @uclassa_telebot to submit your photos")
     else:
