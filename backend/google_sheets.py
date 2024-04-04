@@ -1,12 +1,11 @@
 from __future__ import print_function
 
 import os
-import re
 import yaml
 import pytz
 from abc import ABC, abstractmethod
 from typing import final
-from datetime import datetime, timedelta
+from datetime import datetime
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
