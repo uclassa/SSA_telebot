@@ -1,12 +1,11 @@
 from __future__ import print_function
 
 import os
-import re
 import yaml
 import pytz
 from abc import ABC, abstractmethod
 from typing import final
-from datetime import datetime, timedelta
+from datetime import datetime
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -132,109 +131,6 @@ class Members(Google_Sheets):
         """
         members = self.get()
         return members.get(str(user_id)) != None
-
-class Events(Google_Sheets):
-    def __init__(self, sheet_id=SHEET_ID):
-        super().__init__(spreadsheet_id=sheet_id, range_name="Events")
-        
-        
-    def get(self):
-        self.refreshRead()
-        return(self.values)
-    
-    
-    def parseDateTime(self, values):
-        """AI is creating summary for parseDateTime
-        
-
-        Args:
-            values (list): cell values from the sheet (name, start_date, end_date, start_time, end_time, location)
-
-        Returns:
-            str: message to be displayed as "START_DATE START_TIME - END_DATE END_TIME"
-        """
-        start_date_raw, end_date_raw, start_time_raw, end_time_raw = values
-        input_time_format='%I:%M:%S %p'
-        output_time_short_format='%I%p'
-        output_time_full_format='%I:%M%p'
-        message = ''
-        
-        if not start_time_raw == '':
-            start_time = datetime.strptime(start_time_raw, input_time_format)
-            start_time = start_time.strftime(output_time_short_format) if start_time.minute == 0 else start_time.strftime(output_time_full_format)
-            start_time = re.sub(r'0(\d)', r'\1', start_time)
-            start_time = start_time.replace('AM', 'am').replace('PM', 'pm')
-            message += start_date_raw + ' ' + start_time
-        if not end_time_raw == '':
-            end_time = datetime.strptime(end_time_raw, input_time_format)
-            end_time = end_time.strftime(output_time_short_format) if end_time.minute == 0 else end_time.strftime(output_time_full_format)
-            end_time = re.sub(r'0(\d)', r'\1', end_time)
-            end_time = end_time.replace('AM', 'am').replace('PM', 'pm')
-            message += ' - ' + end_date_raw + (' ' if (not end_date_raw == '') else '') + end_time
-        return message
-    
-    
-    def generateReply(self):
-        """Prints up to MAX_EVENTS no. of upcoming events
-
-        Args:
-
-        Returns:
-            str: message to be displayed by the bot
-        """
-        self.refreshRead()
-        reply = '🎈 Upcoming events 🎈\n\n'
-        count = 0
-        for _, value in self.values.items():
-            if self.getDayDiffFromToday(value[1]) > 0:
-                reply += '<b>' + value[0] + '</b> @ ' + value[5] + '\n'
-                parsedDateTime = self.parseDateTime(value[1:5])
-                if not parsedDateTime == '':
-                    reply += parsedDateTime + '\n'
-                reply += '\n'
-                count += 1
-                
-            if count >= MAX_EVENTS:
-                break
-        return reply
-    
-    
-    def getDayDiffFromToday(self, start_date_str):
-        """Returns the number of days between current_date and start_date_str
-
-        Args:
-            start_date_str (datetime): [description]
-
-        Returns:
-            int: no. of days between current_date and start_date_str
-        """
-        start_date = datetime.strptime(start_date_str, '%m/%d/%y').date()
-        timedelta = start_date - datetime.now(timezone).date()
-        datedelta = timedelta.days
-        return datedelta
-    
-    
-    def generateReminder(self):
-        """Prints events that are upcoming in DAY_CUTOFF days
-
-        Returns:
-            str: message to be displayed by the bot
-        """
-        self.refreshRead()
-        hasUpcomingEvent = False
-        reminder = f'❗Reminder❗\nThere are events upcoming in {DAY_CUTOFF} days:\n'
-        for _, value in self.values.items():
-            day_diff = self.getDayDiffFromToday(value[1])
-            if day_diff >= 0 and day_diff == DAY_CUTOFF:
-                hasUpcomingEvent = True
-                reminder += ( value[0]          # Event name
-                    + ' @ ' + value[5]          # Event location
-                    + ' on ' + value[1]         # Event start date
-                    + '\n'
-                )
-        
-        # if no upcoming event, return none and make bot not send anything
-        return reminder if hasUpcomingEvent else None
 
 
 class GroupIDs(Google_Sheets):
