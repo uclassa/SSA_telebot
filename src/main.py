@@ -5,14 +5,15 @@ import json
 
 from typing import final
 from dotenv import load_dotenv
-from datetime import datetime, time
+from datetime import time
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import ConversationHandler, Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
 from fam_submissions import FamSubmissions
 
 APPLICATION_DIR = os.path.join(os.path.dirname(__file__), '..')
 sys.path.append(APPLICATION_DIR)
-from backend.google_sheets import Members, Events, GroupIDs, Feedback, Submissions, Leaderboard
+from backend.google_sheets import Members, GroupIDs, Feedback, Submissions, Leaderboard
+from backend.events_service import Events
 
 # Load environment variables from ./../config.env
 dotenv_path = os.path.join(APPLICATION_DIR, 'config.env')
@@ -159,6 +160,7 @@ async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Based on the option selected, respond with a different message
     if option == "events":
+        await query.message.reply_text("Wait ah, let me check my calendar... 📅\n\n")
         await query.message.reply_text(get_upcoming_events(), parse_mode="HTML")
     elif option == "fam_points":
         await query.message.reply_text(get_points_info(), disable_web_page_preview=True, parse_mode= "HTML")
