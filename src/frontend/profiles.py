@@ -135,7 +135,7 @@ class ProfileSetup:
         await update.message.reply_text("Profile setup canceled, Ah Gong never remember any info. Ttyl bestie.")
         return ConversationHandler.END
         
-    async def skip_photo(update: Update, context: CallbackContext) -> int:
+    async def skip_photo(self, update: Update, context: CallbackContext) -> int:
         """
         Skips photo upload and ends the conversation instead.
         """

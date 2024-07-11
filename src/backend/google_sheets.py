@@ -6,17 +6,11 @@ import pytz
 from abc import ABC, abstractmethod
 from typing import final
 from datetime import datetime
-from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from google.oauth2.service_account import Credentials
 from .service_account_loader import get_service_account_info
 
-
-# Load environment variables from ./../config.env
-APPLICATION_DIR = os.path.join(os.path.dirname(__file__), '..')
-dotenv_path = os.path.join(APPLICATION_DIR, 'config.env')
-load_dotenv(dotenv_path)
 
 SHEET_ID: final = os.environ.get("MASTER_SHEET")
 os.chdir(os.path.dirname(__file__))
@@ -301,14 +295,4 @@ class Leaderboard(Google_Sheets):
     def get(self):
         self.refreshRead()
         return(self.values)
-
-# if __name__ == '__main__':
-    # members = Members()
-    # members.get()
-    # events = Events()
-    # events.get()
-    # print(events.generateReply())
-    # print(events.generateReminder())
-    # group_ids = GroupIDs(dev_mode=True)
-    # print(group_ids.getGroupIDs())
     

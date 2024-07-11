@@ -1,4 +1,4 @@
-
+venv
 .vscode/settings.json
 config.env
 credentials.json
