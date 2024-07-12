@@ -1,6 +1,6 @@
 venv
-.vscode/settings.json
+.vscode
 config.env
 credentials.json
 token.json
-*.pyc
+__pycache__

@@ -1,5 +1,4 @@
-import os
-import pytz
+import os, pytz, asyncio, logging
 
 from typing import final
 from dotenv import load_dotenv
@@ -10,7 +9,7 @@ load_dotenv("config.env")
 from datetime import time
 from telegram.ext import ConversationHandler, Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters
 from frontend.fam_submissions import FamSubmissions
-from frontend.handlers import start_command, help_command, error, create_on_button_click
+from frontend.handlers import start_command, error, create_events_command, create_leaderboard_command
 from backend.google_sheets import Submissions, Leaderboard
 from backend.events_service import Events
 
@@ -21,21 +20,32 @@ ADMIN_GRP: final = os.environ.get("ADMIN_GRP")
 timezone = pytz.timezone(os.environ.get("TIMEZONE"))
 REMINDER_TIME: final = time(8, 0, 0, tzinfo=timezone)
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
-# Main
-if __name__ == "__main__":
-    app = Application.builder().token(TOKEN).build()
-    events = Events()
-    fam_sheet = Submissions()
-    leaderboard = Leaderboard()
+
+async def post_init(app: Application) -> None:
+    await app.bot.set_my_commands([
+        ("start", "Start the bot"),
+        ("events", "View upcoming events"),
+        ("leaderboard", "View the fam points leaderboard"),
+        ("submit_photo", "Submit a fam photo")
+    ])
+
+
+def main():
+    app = Application.builder().token(TOKEN).post_init(post_init).build()
+    
+    
     fam_submissions = FamSubmissions()
     
     # Commands
     app.add_handler(CommandHandler("start", start_command))
-    app.add_handler(CommandHandler("help", help_command))
-    
-    # Callbacks for menu button clicks
-    app.add_handler(CallbackQueryHandler(create_on_button_click(events, leaderboard)))
+    app.add_handler(CommandHandler("events", create_events_command(Events())))
+    app.add_handler(CommandHandler("leaderboard", create_leaderboard_command(Leaderboard())))
+
 
     NAME = fam_submissions.NAME
     FAMILY = fam_submissions.FAMILY
@@ -46,7 +56,7 @@ if __name__ == "__main__":
 
     app.add_handler(ConversationHandler(
         entry_points=[
-            CommandHandler('submit_photo', fam_submissions.start),
+            CommandHandler("submit_photo", fam_submissions.start)
         ],
         states={
             NAME: [MessageHandler(filters.TEXT, fam_submissions.save_name)],
@@ -64,4 +74,8 @@ if __name__ == "__main__":
     # Polls the bot for updates
     print("Bot is running...")
     app.run_polling(poll_interval=3)
-    
+
+
+
+if __name__ == "__main__":
+    main()
