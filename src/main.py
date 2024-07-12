@@ -7,12 +7,13 @@ os.chdir(os.path.dirname(os.path.dirname(__file__)))
 load_dotenv("config.env")
 
 from datetime import time
-from telegram.ext import ConversationHandler, Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters
-from frontend.fam_submissions import FamSubmissions
-from frontend.handlers import start_command, error, create_events_command, create_leaderboard_command
-from backend.google_sheets import Submissions, Leaderboard
-from backend.events_service import Events
+from telegram.ext import Application
 
+from frontend.fam_submissions import FamSubmissions
+from frontend.start import StartCommand
+from frontend.events import EventsCommand
+from frontend.leaderboard import LeaderboardCommand
+from frontend.utils import error
 
 TOKEN: final = os.environ.get("TOKEN")
 BOT_USERNAME: final = os.environ.get("BOT_USERNAME")
@@ -20,10 +21,10 @@ ADMIN_GRP: final = os.environ.get("ADMIN_GRP")
 timezone = pytz.timezone(os.environ.get("TIMEZONE"))
 REMINDER_TIME: final = time(8, 0, 0, tzinfo=timezone)
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+# logging.basicConfig(
+#     level=logging.INFO,
+#     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+# )
 
 
 async def post_init(app: Application) -> None:
@@ -38,35 +39,11 @@ async def post_init(app: Application) -> None:
 def main():
     app = Application.builder().token(TOKEN).post_init(post_init).build()
     
-    
-    fam_submissions = FamSubmissions()
-    
     # Commands
-    app.add_handler(CommandHandler("start", start_command))
-    app.add_handler(CommandHandler("events", create_events_command(Events())))
-    app.add_handler(CommandHandler("leaderboard", create_leaderboard_command(Leaderboard())))
-
-
-    NAME = fam_submissions.NAME
-    FAMILY = fam_submissions.FAMILY
-    FAMPHOTO = fam_submissions.FAMPHOTO
-    DESCRIPTION = fam_submissions.DESCRIPTION
-    NUMBER = fam_submissions.NUMBER
-
-
-    app.add_handler(ConversationHandler(
-        entry_points=[
-            CommandHandler("submit_photo", fam_submissions.start)
-        ],
-        states={
-            NAME: [MessageHandler(filters.TEXT, fam_submissions.save_name)],
-            FAMILY: [MessageHandler(filters.TEXT, fam_submissions.save_family)],
-            FAMPHOTO: [MessageHandler(filters.PHOTO, fam_submissions.save_famphoto)],
-            DESCRIPTION: [MessageHandler(filters.TEXT, fam_submissions.save_description)],
-            NUMBER: [MessageHandler(filters.TEXT, fam_submissions.save_number)],
-        },
-        fallbacks=[CommandHandler('cancel', fam_submissions.cancel)])
-    )
+    StartCommand().register(app)
+    EventsCommand().register(app)
+    LeaderboardCommand().register(app)
+    FamSubmissions().register(app)
 
     # Error
     app.add_error_handler(error)
