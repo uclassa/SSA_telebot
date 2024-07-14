@@ -1,4 +1,4 @@
-from .command import Command
+from ..command import Command
 from telegram import Update
 from telegram.ext import ContextTypes, Application, CommandHandler
 

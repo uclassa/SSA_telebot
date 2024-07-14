@@ -1,10 +1,10 @@
 import os
 import sys
 
-from .command import Command
+from ..command import Command
 from datetime import datetime
 from telegram import Update, InlineKeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
-from telegram.ext import ConversationHandler, CallbackContext, CommandHandler, MessageHandler, filters
+from telegram.ext import Application, ConversationHandler, CallbackContext, CommandHandler, MessageHandler, filters
 
 
 APPLICATION_DIR = os.path.join(os.path.dirname(__file__), '..')
@@ -14,7 +14,7 @@ from backend.google_drive import Google_Drive
 
 GROUP_IMAGES_FOLDER = os.environ.get("GROUP_IMAGES_FOLDER")
 
-class FamSubmissions(Command):
+class FamSubmissionsCommand(Command):
     """
     This class handles the Fam Photos Submission conversation.
     """
@@ -154,7 +154,7 @@ class FamSubmissions(Command):
             return ConversationHandler.END
 
 
-    def register(self, app):
+    def register(self, app: Application):
         app.add_handler(ConversationHandler(
             entry_points=[
                 CommandHandler("submit_photo", self._start)
