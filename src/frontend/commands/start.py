@@ -7,10 +7,6 @@ class StartCommand(Command):
     """
     Start command class. Sends a welcome message to the user when the /start command is invoked.
     """
-    def __init__(self) -> None:
-        pass
-
-
     async def _handle(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user = update.message.from_user
         welcome_message = (f"Hello {user.first_name}! 🇸🇬🎉\n\n"
@@ -27,5 +23,5 @@ class StartCommand(Command):
         await update.message.reply_text(welcome_message, disable_web_page_preview=True, parse_mode= "HTML")
 
 
-    def register(self, app: Application):
-        app.add_handler(CommandHandler("start", self._handle))
+    def register(self, app: Application, cmd: str = "start") -> None:
+        app.add_handler(CommandHandler(cmd, self._handle))

@@ -2,17 +2,13 @@ import os
 import requests
 import pytz
 import yaml
-
+from .api_service import APIService
 from datetime import datetime
 from dateutil.parser import parse
-from dotenv import load_dotenv
 
-APPLICATION_DIR = os.path.join(os.path.dirname(__file__), '..')
-dotenv_path = os.path.join(APPLICATION_DIR, 'config.env')
-load_dotenv(dotenv_path)
-
-class Events():
+class EventService(APIService):
 	def __init__(self):
+		super().__init__("events")
 		with open('const.yml', 'r') as file:
 			constants = yaml.safe_load(file)
 				
@@ -29,8 +25,7 @@ class Events():
 			list: List of upcoming events sorted by date, or an empty list if there are no upcoming events.
 		'''
 
-		backend_url = os.environ.get("DJANGO_API")
-		response = requests.get(backend_url + '/events')
+		response = requests.get(self.base_url)
 
 		if response.status_code == 200:
 			events = response.json()

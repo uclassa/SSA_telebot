@@ -1,25 +1,15 @@
-import os, pytz, asyncio, logging
+import os, logging
 
-from typing import final
 from dotenv import load_dotenv
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
 # Load environment variables from ./../config.env
 load_dotenv("config.env")
 
-from datetime import time
 from telegram.ext import Application
 
-from frontend.fam_submissions import FamSubmissions
-from frontend.start import StartCommand
-from frontend.events import EventsCommand
-from frontend.leaderboard import LeaderboardCommand
+from frontend import commands as cmd
 from frontend.utils import error
 
-TOKEN: final = os.environ.get("TOKEN")
-BOT_USERNAME: final = os.environ.get("BOT_USERNAME")
-ADMIN_GRP: final = os.environ.get("ADMIN_GRP")
-timezone = pytz.timezone(os.environ.get("TIMEZONE"))
-REMINDER_TIME: final = time(8, 0, 0, tzinfo=timezone)
 
 # logging.basicConfig(
 #     level=logging.INFO,
@@ -27,23 +17,27 @@ REMINDER_TIME: final = time(8, 0, 0, tzinfo=timezone)
 # )
 
 
-async def post_init(app: Application) -> None:
-    await app.bot.set_my_commands([
-        ("start", "Start the bot"),
-        ("events", "View upcoming events"),
-        ("leaderboard", "View the fam points leaderboard"),
-        ("submit_photo", "Submit a fam photo")
-    ])
+COMMANDS = [
+    ("start", "Start the bot", cmd.StartCommand),
+    ("events", "View upcoming events", cmd.EventsCommand),
+    ("leaderboard", "View the fam points leaderboard", cmd.LeaderboardCommand),
+    ("submit_photo", "Submit a fam photo", cmd.FamSubmissionsCommand)
+]
+
+
+async def set_commands(app: Application) -> None:
+    """
+    Sets the bot's commands in the chat menu
+    """
+    await app.bot.set_my_commands([(cmd, desc) for cmd, desc, _ in COMMANDS])
 
 
 def main():
-    app = Application.builder().token(TOKEN).post_init(post_init).build()
+    app = Application.builder().token(os.environ.get("TOKEN")).post_init(set_commands).build()
     
     # Commands
-    StartCommand().register(app)
-    EventsCommand().register(app)
-    LeaderboardCommand().register(app)
-    FamSubmissions().register(app)
+    for cmd, _, command in COMMANDS:
+        command().register(app, cmd)
 
     # Error
     app.add_error_handler(error)
@@ -51,7 +45,6 @@ def main():
     # Polls the bot for updates
     print("Bot is running...")
     app.run_polling(poll_interval=3)
-
 
 
 if __name__ == "__main__":
