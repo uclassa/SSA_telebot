@@ -13,4 +13,6 @@ class LeaderboardService(APIService):
         Retrieves the leaderboard from the database.
         """
         response = requests.get(f"{self.base_url}/", headers=self.headers)
-        return sorted(response.json(), key=lambda x: float(x['points']), reverse=True)
+        if response.status_code == 200:
+            return sorted(response.json(), key=lambda x: float(x['points']), reverse=True)
+        raise Exception("Failed to retrieve leaderboard", response.status_code, response.json())

@@ -23,7 +23,8 @@ class ProfileService(APIService):
                     requests.patch(f"{self.base_url}/i/{user_id}/", data={ "telegram_username": username }, headers=self.headers)
             finally:
                 return response
-        
+        if response.status_code != 404:
+            raise Exception("Failed to retrieve user profile", response.status_code, response.json())
         # If that doesn't work, try searching using the username
         response = requests.get(f"{self.base_url}/u/{username}/", headers=self.headers)
         if response.status_code == 200:
