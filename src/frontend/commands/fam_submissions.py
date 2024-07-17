@@ -83,7 +83,7 @@ class FamSubmissionsCommand(Command):
         
 
     async def cancel(self, update: Update, context: CallbackContext) -> int:
-        await update.message.reply_text("Fam Photos Submission canceled, Ah Gong never remember any info. Ttyl bestie.")
+        await update.message.reply_text("Fam Photos Submission canceled, Ah Gong never remember any info. Ttyl bestie.", reply_markup=ReplyKeyboardRemove())
         return ConversationHandler.END
 
 

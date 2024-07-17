@@ -45,7 +45,7 @@ class EventService(APIService):
 		events = self.get()
 
 		if events == []:
-			return 'Calender seems empty right now. Bug the admins to update it! 🐞'
+			return 'Calendar seems empty right now. Bug the admins to update it! 🐞'
 
 		reply = '🎈 Upcoming events 🎈\n\n'
 		count = 0

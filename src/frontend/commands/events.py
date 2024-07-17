@@ -14,7 +14,7 @@ class EventsCommand(Command):
 
     async def _handle(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Wait ah, let me check my calendar... 📅\n\n")
-        await update.message.reply_text(EventService().generateReply(), parse_mode="HTML")
+        await update.message.reply_text(self.event_service.generateReply(), parse_mode="HTML")
 
 
     def register(self, app: Application, cmd: str = "events") -> None:
