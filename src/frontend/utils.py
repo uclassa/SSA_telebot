@@ -1,6 +1,6 @@
 from telegram import Update
 from telegram.ext import ContextTypes
-import json
+import json, sys
 
 
 # Check if chat is private chat
@@ -13,7 +13,7 @@ async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ERROR_REPLY = "Oops, ah gong seems to have run into a problem 🤧, please notify the devs if this persists..."
     if update is None:
         # Phantom container, exit the telebot
-        exit(1)
+        sys.exit(1)
     if update.message:
         await update.message.reply_text(ERROR_REPLY)
     elif update.callback_query:
