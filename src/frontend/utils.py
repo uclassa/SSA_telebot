@@ -1,4 +1,5 @@
 from telegram import Update
+from telegram.error import Conflict
 from telegram.ext import ContextTypes
 import json, sys
 
@@ -9,11 +10,10 @@ def is_private_chat(update: Update) -> bool:
 
 
 # Error handler
-async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ERROR_REPLY = "Oops, ah gong seems to have run into a problem 🤧, please notify the devs if this persists..."
-    if update is None:
-        # Phantom container, exit the telebot
-        sys.exit(1)
+    if isinstance(context.error, Conflict):
+        sys.exit("Bot is already running in another instance")
     if update.message:
         await update.message.reply_text(ERROR_REPLY)
     elif update.callback_query:
