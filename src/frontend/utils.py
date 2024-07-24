@@ -19,6 +19,6 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(ERROR_REPLY)
         elif update.callback_query:
             await update.callback_query.message.reply_text(ERROR_REPLY)
+        print(f"Update: {json.dumps(update.to_dict(), indent=4)}")
     # raise context.error
     print(f"Error: {context.error}\n")
-    print(f"Update: {json.dumps(update.to_dict(), indent=4)}")
