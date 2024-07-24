@@ -1,6 +1,6 @@
-from ..command import Command
 from telegram import Update
 from telegram.ext import ContextTypes, Application, CommandHandler
+from ..command import Command
 
 
 class StartCommand(Command):
