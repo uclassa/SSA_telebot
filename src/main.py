@@ -8,7 +8,7 @@ load_dotenv("config.env")
 from telegram.ext import Application
 
 from frontend import commands as cmd
-from frontend.utils import error_handler
+from frontend.utils import ErrorHandler
 
 
 # logging.basicConfig(
@@ -40,7 +40,7 @@ def main():
         command().register(app, cmd)
 
     # Error
-    app.add_error_handler(error_handler)
+    app.add_error_handler(ErrorHandler())
     
     # Polls the bot for updates
     print("Bot is running...")
