@@ -1,14 +1,14 @@
 import os, logging
-
 from dotenv import load_dotenv
-os.chdir(os.path.dirname(os.path.dirname(__file__)))
-# Load environment variables from ./../config.env
-load_dotenv("config.env")
 
 from telegram.ext import Application
 
 from frontend import commands as cmd
 from frontend.utils import ErrorHandler
+
+os.chdir(os.path.dirname(os.path.dirname(__file__)))
+# Load environment variables from ./../config.env
+load_dotenv("config.env")
 
 
 # logging.basicConfig(
@@ -17,11 +17,17 @@ from frontend.utils import ErrorHandler
 # )
 
 
-COMMANDS = [
+PUBLIC_COMMANDS = [
     ("start", "Start the bot", cmd.StartCommand),
     ("events", "View upcoming events", cmd.EventsCommand),
     ("leaderboard", "View the fam points leaderboard", cmd.LeaderboardCommand),
-    ("submit_photo", "Submit a fam photo", cmd.FamSubmissionsCommand)
+    ("submit_photo", "Submit a fam photo", cmd.FamSubmissionsCommand),
+    ("register_groupchat", "Register a groupchat", cmd.RegisterGroupchatCommand),
+    ("unregister_groupchat", "Unregister a groupchat", cmd.UnregisterGroupchatCommand),
+]
+
+ALL_COMMANDS = PUBLIC_COMMANDS + [
+    ("announce", "Record an announcement", cmd.RecordAnnouncementCommand),
 ]
 
 
@@ -29,19 +35,19 @@ async def set_commands(app: Application) -> None:
     """
     Sets the bot's commands in the chat menu
     """
-    await app.bot.set_my_commands([(cmd, desc) for cmd, desc, _ in COMMANDS])
+    await app.bot.set_my_commands([(cmd, desc) for cmd, desc, _ in PUBLIC_COMMANDS])
 
 
 def main():
     app = Application.builder().token(os.environ.get("TOKEN")).post_init(set_commands).build()
-    
+
     # Commands
-    for cmd, _, command in COMMANDS:
-        command().register(app, cmd)
+    for command_string, _, command in ALL_COMMANDS:
+        command().register(app, command_string)
 
     # Error
     app.add_error_handler(ErrorHandler())
-    
+
     # Polls the bot for updates
     print("Bot is running...")
     app.run_polling(poll_interval=3)
