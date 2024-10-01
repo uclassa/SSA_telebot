@@ -96,6 +96,7 @@ class FamSubmissionsCommand(Command):
         photo_file = await update.message.photo[-1].get_file()
         await update.message.reply_text("Uploading your image...(please wait for a moment)")
         try:
+            #TODO: submit returns the score, if above threshold, send announcements to fam groupchats with the picture and the score. Store the message id of the picture and copy it with the captions
             await SubmissionService().submit(context.user_data["submission"], photo_file, f'{update.message.from_user.first_name}.jpg')
         except Exception as e:
             await update.message.reply_text(error())
