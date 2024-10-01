@@ -10,7 +10,7 @@ class SubmissionService(APIService):
     def __init__(self):
         super().__init__("submissions")
 
-    async def submit(self, submission: dict, image: File, image_name: str) -> None:
+    async def submit(self, submission: dict, image: File, image_name: str) -> float:
         """
         Submission contains member, description, number of people and image
         """
@@ -27,3 +27,4 @@ class SubmissionService(APIService):
         os.remove(image_name)
         if response.status_code != 201:
             raise Exception(f"Photo submission failed: {response.status_code} response", response.json())
+        return response.json().get("score")
