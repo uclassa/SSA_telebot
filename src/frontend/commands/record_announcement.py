@@ -62,14 +62,13 @@ class RecordAnnouncementCommand(Command):
             try:
                 await context.bot.copy_messages(chat["id"], update.message.chat_id, context.user_data["announcement"])
             except Forbidden:
-                # If the bot runs into issues sending the messages, just ignore it and continue LOL
-                pass
+                print(f"Announcement command: sending message failed for group {chat.get('id')}, title {chat.get('title')}")
         await update.message.reply_text("Messages sent to all registered groupchats! 🎉")
         return ConversationHandler.END
 
     async def cancel(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Recording cancelled.")
-        del context.user_data["announcement"]
+        context.user_data.pop("announcement", None)
         return ConversationHandler.END
 
     def register(self, app: Application, cmd: str = "record_announcement") -> None:
