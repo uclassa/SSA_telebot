@@ -18,13 +18,15 @@ class GroupchatBaseCommand(Command):
     async def _handle(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Check if the chat is a private chat
         if is_private_chat(update):
-            return
+            return await update.message.reply_text("Oops, looks like you just tried to register a private chat. We don't support that at the moment, but feel free to reach out to the devs if you have any questions!")
 
         user = update.message.from_user
         profile = ProfileService().get_user_attempt_update(user.id, user.username)
         if not profile:
+            print(f"Unregistered user attempted to register/unregister groupchat: {user.username}")
             return
         if not profile.get("is_admin"):
+            print(f"Unauthorized user attempted to register/unregister groupchat: {user.username}")
             return
 
         # self.backend_call is defined in the subclasses

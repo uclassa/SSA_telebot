@@ -1,9 +1,9 @@
-from typing import Optional
-
 from telegram import Update, InlineKeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import Application, ConversationHandler, CallbackContext, CommandHandler, MessageHandler, filters
-from ..command import Command
 from backend import ProfileService, SubmissionService
+from ..command import Command
+from ..replies import not_registered, error
+
 
 class FamSubmissionsCommand(Command):
     """
@@ -13,7 +13,7 @@ class FamSubmissionsCommand(Command):
         self.DESCRIPTION, self.FAMPHOTO, self.NUMBER = range(3)
 
 
-    async def start(self, update: Update, context: CallbackContext) -> Optional[int]:
+    async def start(self, update: Update, context: CallbackContext) -> int:
         """
         Starts the Fam Photos Submission conversation. Also prompts the user to input the number of people in their family that attended the event.
         """
@@ -22,7 +22,7 @@ class FamSubmissionsCommand(Command):
 
         # Check if the user is registered in the database
         if not profile:
-            await update.message.reply_text(f"Hey {user.first_name}, looks like you're not registered in Ah Gong's database 😰\n\nPlease ask the admins to register your telegram handle first!")
+            await update.message.reply_text(not_registered(user.first_name))
             return await self.cancel(update, context)
         
         # Check if the user is in a family
@@ -39,7 +39,7 @@ class FamSubmissionsCommand(Command):
         return self.NUMBER
     
 
-    async def number(self, update: Update, context: CallbackContext) -> Optional[int]:
+    async def number(self, update: Update, context: CallbackContext) -> int:
         """
         Handles the numerical reply and prompts the user to input the location of the event.
         """
@@ -56,6 +56,8 @@ class FamSubmissionsCommand(Command):
         
         await update.message.reply_text("Please enter a valid number of people in your family that attended the event!\n\nOr /cancel this submission 😬")
 
+        return self.NUMBER
+
 
     async def description(self, update: Update, context: CallbackContext) -> int:
         '''
@@ -68,6 +70,7 @@ class FamSubmissionsCommand(Command):
             await update.message.reply_text(f'Lets score some points for {context.user_data["profile"]["family"]} 🎉\n\nSend me your photo!\n\nOr /cancel this submission 😑', reply_markup=ReplyKeyboardRemove())
 
             return self.FAMPHOTO
+        return self.DESCRIPTION
         
 
     async def famphoto(self, update: Update, context: CallbackContext) -> int:
@@ -75,8 +78,9 @@ class FamSubmissionsCommand(Command):
         await update.message.reply_text("Uploading your image...(please wait for a moment)")
         try:
             await SubmissionService().submit(context.user_data["submission"], photo_file, f'{update.message.from_user.first_name}.jpg')
-        except:
-            await update.message.reply_text("Oops, ah gong seems to have run into a problem submitting your photo 🤧\n\nPlease try again later and notify the devs if this problem persists...")
+        except Exception as e:
+            await update.message.reply_text(error())
+            print(e)
             return await self.cancel(update, context)
         await update.message.reply_text(f"Your Fam Photos Submission for {context.user_data['profile']['family']} has been completed. Thank you {update.message.from_user.first_name}!")
         return ConversationHandler.END
@@ -84,6 +88,8 @@ class FamSubmissionsCommand(Command):
 
     async def cancel(self, update: Update, context: CallbackContext) -> int:
         await update.message.reply_text("Fam Photos Submission canceled, Ah Gong never remember any info. Ttyl bestie.", reply_markup=ReplyKeyboardRemove())
+        context.user_data.pop("submission", None)
+        context.user_data.pop("profile", None)
         return ConversationHandler.END
 
 

@@ -2,6 +2,7 @@ import json, sys, time
 from telegram import Update
 from telegram.error import Conflict
 from telegram.ext import ContextTypes
+from .replies import error
 
 
 # Check if chat is private chat
@@ -35,11 +36,10 @@ class ErrorHandler:
             self.last_conflict = now
         if update:
             # For errors related to updates
-            ERROR_REPLY = "Oops, ah gong seems to have run into a problem 🤧, please notify the devs if this persists..."
             if update.message:
-                await update.message.reply_text(ERROR_REPLY)
+                await update.message.reply_text(error())
             elif update.callback_query:
-                await update.callback_query.message.reply_text(ERROR_REPLY)
+                await update.callback_query.message.reply_text(error())
             print(f"Update: {json.dumps(update.to_dict(), indent=4)}\n")
             print(f"Error: {context.error}")
             # raise context.error

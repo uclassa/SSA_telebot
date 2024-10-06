@@ -10,14 +10,20 @@ class SubmissionService(APIService):
     def __init__(self):
         super().__init__("submissions")
 
-    async def submit(self, submission: dict, image: File, image_name: str):
+    async def submit(self, submission: dict, image: File, image_name: str) -> None:
         """
         Submission contains member, description, number of people and image
         """
         await image.download_to_drive(image_name)
-        response = requests.post(f"{self.base_url}/",
-                                 data=submission,
-                                 files={"image": open(image_name, "rb")},
-                                 headers=self.headers)
+        try:
+            with open(image_name, "rb") as file:
+                response = requests.post(f"{self.base_url}/",
+                                        data=submission,
+                                        files={"image": file},
+                                        headers=self.headers)
+        except Exception:
+            os.remove(image_name)
+            raise
         os.remove(image_name)
-        return response.status_code == 201
+        if response.status_code != 201:
+            raise Exception(f"Photo submission failed: {response.status_code} response", response.json())
