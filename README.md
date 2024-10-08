@@ -1,64 +1,26 @@
 # SSA_telebot
-Telegram Bot for SSA
-
-## User Guide
-> ⚠️ When adding bot to groups, bot must be promoted to admin in group setting
-Currently, functionalities of the bot are the same regardless of whether the chat is a direct message or in a group. However, to interact with the bot in a group chat, you must call the bot with `@uclassa_telebot`.
-
-Groups will be added to the list of known group IDs only when `/start` command is called in the group that the bot is in. **Only known groups will receive announcement broadcasts.**
+This is the Telegram Bot for SSA@UCLA! We use the <a href="https://python-telegram-bot.org/">`python-telegram-bot`</a> framework for our development.
 
 ## Developer Notes
 
-- Bot name: SSA Ah Gong \
-- Bot username: uclassa_telebot \
-- Check SSA google drive for the `config.env` file, copy and paste it in your local repo. The `.env` file should contain something like this:
+- Bot name: SSA Ah Gong
+- Bot username: uclassa_telebot
 - Image from [Ah Kong Durian](https://www.ahkongdurian.com/) - **_Please check for copyright conflicts!_**
+
   <img src="./img/ahgong.png">
 
-### Requirements
-```pip install -r requirements.txt```
+### Environment Variables
+Check the `config.env.template` file for the required environment variables. You can leave `TIMEZONE` blank. Use any api key you want, but just make sure it matches the one you use on your local django server. Refer to <a href="https://core.telegram.org/bots/tutorial#obtain-your-bot-token">telegram's documentation</a> on how to get a `TOKEN`.
 
-### Backend Details
+### Running Locally
+Refer to the <a href="https://github.com/uclassa/charkwayteow">`charkwayteow`</a> repository's README for steps to set up a python virtual environment. Install the required dependencies and run `src/main.py` to run the bot.
+```
+pip3 install -r requirements.txt
+python3 src/main.py
+```
 
-Follow these steps if you don't have a working config.env file or if some OAuth credentials are missing/expired/not working.
-
-(Skip to step 3 if you already have a working `token.json` generated from `quickstart.py`)
-1. Copy `credentials.json` from Google Cloud Platform or the Google Drive 'Telebot' folder to the root folder of the repo _(try placing it in the `backend` folder of the repo instead if the file can't be found in step 2)_. 
-2. Run `quickstart.py` in the `backend` folder to generate a `token.json`.
-3. Copy the following fields from the `token.json` into `config.env` and name them accordingly:
-    ```
-    # EXAMPLE: "name in token.json": os.environ.get('name in config.env')
-
-    "refresh_token": os.environ.get('google_refresh_token'),
-    "client_id": os.environ.get('google_client_id'),
-    "client_secret": os.environ.get('google_client_secret'),
-    "token_uri": os.environ.get('google_token_uri'),
-    ```
-This is to support deployment on Railway where we have to set the environment variables manually.
+Most of the functionality of the bot is closely tied with the backend server. Follow the instructions in the `charkwayteow` repository to run it locally.
 
 ### Workplan
 
-<u> Database </u>
-- [x] Incorporate [Google API](https://developers.google.com/sheets/api/quickstart/python)
-- [ ] read from Google Sheets to identify fams according to their telegram username
-- [ ] store selected images to Google Drive
-- [ ] write to Google Sheets file for tracking fam scores
-- [x] read event information from Google Sheets
-- [x] send reminders if event is coming up in 5 days (add Groups with the bot will be updated)
-- [x] added const.yml to store constants
-
-<u> Telegram API </u>
-- [ ] identify an image being sent and the user information
-- [ ] identify context and group images based on event/fam
-- [ ] create a response AI (bonus: use some singaporean speech generator)
-
-<u> Image Detection </u>
-- [ ] facial recognition
-- [ ] similarity comparison to identify photos from the same event/activity
-- [ ] filter unrelated images (non fam outing/hangout type of images)
-- [ ] quality selection to find the best photo within a group of photos
-
-<u> Others </u>
-- [ ] error handling
-- [ ] testing
-- [ ] time zone based on event location or based on user location
+See <a href="https://www.notion.so/SSA-SWE-b1b5607878fa429ba967ea707d0ca5b4?pvs=4">notion page</a> for more details.
