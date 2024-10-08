@@ -7,6 +7,7 @@ from backend.events_service import EventService
 class EventsCommand(Command):
     """
     Events command class. Sends a list of upcoming events to the user when the /events command is invoked.
+    TODO: Change this to a conversation handler. rsvping in groupchats should be disabled by default.
     """
     def __init__(self) -> None:
         self.event_service = EventService()
@@ -18,4 +19,12 @@ class EventsCommand(Command):
 
 
     def register(self, app: Application, cmd: str = "events") -> None:
+<<<<<<< Updated upstream
         app.add_handler(CommandHandler(cmd, self._handle))
+=======
+        app.add_handler(ConversationHandler(
+            entry_points=[CommandHandler(cmd, self.start)],
+            states={self.RSVP: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.rsvp)]},
+            fallbacks=[CommandHandler('cancel', self.cancel)],
+        ))
+>>>>>>> Stashed changes

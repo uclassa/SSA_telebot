@@ -1,3 +1,4 @@
+"""NOTE: DEPRACATED."""
 import os
 import sys
 

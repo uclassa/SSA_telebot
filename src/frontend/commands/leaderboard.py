@@ -12,7 +12,7 @@ class LeaderboardCommand(Command):
         self.leaderboard_service = LeaderboardService()
 
 
-    async def _handle(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def handle(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         def ordinal(n: int):
             if 11 <= (n % 100) <= 13:
                 suffix = 'th'
@@ -28,4 +28,4 @@ class LeaderboardCommand(Command):
 
 
     def register(self, app: Application, cmd: str = "leaderboard") -> None:
-        app.add_handler(CommandHandler(cmd, self._handle))
+        app.add_handler(CommandHandler(cmd, self.handle))

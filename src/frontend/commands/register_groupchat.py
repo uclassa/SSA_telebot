@@ -15,8 +15,7 @@ class GroupchatBaseCommand(Command):
     def get_backend_call(self):
         pass
 
-    async def _handle(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        # Check if the chat is a private chat
+    async def handle(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if is_private_chat(update):
             return await update.message.reply_text("Oops, looks like you just tried to register a private chat. We don't support that at the moment, but feel free to reach out to the devs if you have any questions!")
 
@@ -42,7 +41,7 @@ class RegisterGroupchatCommand(GroupchatBaseCommand):
         return GroupchatService().register_update_chat
 
     def register(self, app: Application, cmd: str = "register_groupchat") -> None:
-        app.add_handler(CommandHandler(cmd, self._handle))
+        app.add_handler(CommandHandler(cmd, self.handle))
 
 
 class UnregisterGroupchatCommand(GroupchatBaseCommand):
@@ -53,4 +52,4 @@ class UnregisterGroupchatCommand(GroupchatBaseCommand):
         return GroupchatService().unregister_chat
 
     def register(self, app: Application, cmd: str = "unregister_groupchat") -> None:
-        app.add_handler(CommandHandler(cmd, self._handle))
+        app.add_handler(CommandHandler(cmd, self.handle))

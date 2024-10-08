@@ -6,7 +6,11 @@ from .api_service import APIService
 from datetime import datetime
 from dateutil.parser import parse
 
+
 class EventService(APIService):
+	"""
+	TODO: Needs updating, most functionality was from before django backend and currently unused.
+	"""
 	def __init__(self):
 		super().__init__("events")
 		with open('const.yml', 'r') as file:

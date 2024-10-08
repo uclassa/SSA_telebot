@@ -66,7 +66,7 @@ class RecordAnnouncementCommand(Command):
         for chat in groupchats:
             try:
                 await context.bot.copy_messages(chat["id"], update.message.chat_id, context.user_data["announcement"])
-            except Forbidden:
+            except Forbidden: # if group chat has been deleted or if the bot has been removed from the group
                 print(f"Announcement command: sending message failed for group {chat.get('id')}, title {chat.get('title')}")
         await update.message.reply_text("Messages sent to all registered groupchats! 🎉")
         return ConversationHandler.END
@@ -82,7 +82,7 @@ class RecordAnnouncementCommand(Command):
                 CommandHandler(cmd, self.start)
             ],
             states={
-                self.RECORDING: [MessageHandler(~filters.COMMAND, self.record_message)],
+                self.RECORDING: [MessageHandler(~filters.COMMAND, self.record_message)], # records everything that isn't a command
                 self.PAUSED: [CommandHandler("resume", self.resume)]
             },
             fallbacks=[
@@ -90,5 +90,5 @@ class RecordAnnouncementCommand(Command):
                 CommandHandler("finish", self.finish_recording),
                 CommandHandler("pause", self.pause)
             ],
-            per_user=True
+            per_user=True # bot maintains a separate conversation with every user in a group setting. Multiple people can send announcements at once without interference (though i don't know why that would be necessary)
         ))
