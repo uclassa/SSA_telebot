@@ -19,12 +19,4 @@ class EventsCommand(Command):
 
 
     def register(self, app: Application, cmd: str = "events") -> None:
-<<<<<<< Updated upstream
         app.add_handler(CommandHandler(cmd, self._handle))
-=======
-        app.add_handler(ConversationHandler(
-            entry_points=[CommandHandler(cmd, self.start)],
-            states={self.RSVP: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.rsvp)]},
-            fallbacks=[CommandHandler('cancel', self.cancel)],
-        ))
->>>>>>> Stashed changes
