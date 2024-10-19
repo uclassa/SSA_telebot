@@ -1,4 +1,5 @@
-from telegram import Update, InlineKeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
+import json
+from telegram import Update, KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import Application, ConversationHandler, CallbackContext, CommandHandler, MessageHandler, filters
 from backend import ProfileService, SubmissionService
 from ..command import Command
@@ -10,8 +11,10 @@ class FamSubmissionsCommand(Command):
     This class handles the Fam Photos Submission conversation.
     """
     def __init__(self):
-        self.DESCRIPTION, self.FAMPHOTO, self.NUMBER = range(3)
-
+        self.LOCATION, self.FAMPHOTO, self.NUMBER, self.DESCRIPTION = range(4)
+        self.LOCATION_OPTIONS = ["On-Campus", "Off-Campus"]
+        self.ON_CAMPUS_OPTIONS = ["Random meetup", "Fun event"]
+        self.OFF_CAMPUS_OPTIONS = ["Only my fam", "Crossover event!"]
 
     async def start(self, update: Update, context: CallbackContext) -> int:
         """
@@ -34,45 +37,61 @@ class FamSubmissionsCommand(Command):
         context.user_data["submission"] = {"member": profile["id"]}
         context.user_data["profile"] = profile
 
-        await update.message.reply_text(f"Hey {user.first_name}! Welcome to photo submissions!\n\nHope your family had a great time with each other. How many people from your family attended this event?\n\n❗ Be sure to only indicate the number of people from your own family. If a group from another family is present, they would have to submit their own photo.\n\nOr /cancel this submission 😬")
+        await update.message.reply_text(f"Hey {user.first_name}! Welcome to photo submissions!\n\nHope your family had a great time with each other. How many people from your family attended this event?\n\n❗ Be sure to only indicate the number of people from your own family. If a group from another family is present, they would have to submit their own photo.\n\nOr send /cancel at any time to cancel this submission 😬")
 
         return self.NUMBER
     
-
     async def number(self, update: Update, context: CallbackContext) -> int:
         """
         Handles the numerical reply and prompts the user to input the location of the event.
         """
-        if update.message.text.isdigit() and int(update.message.text) in range(1, 30):
-            context.user_data["submission"]["number_of_people"] = int(update.message.text)
-
+        if update.message.text.isdigit() and (num := int(update.message.text)) > 1 and num < 30:
+            context.user_data["submission"]["number_of_people"] = num
             # Location option buttons
-            location_options = ["On-Campus", "Off-Campus"]
-            location_buttons = [[InlineKeyboardButton(location_options[j], callback_data=location_options[j])] for j in range(2)]
+            location_buttons = [[KeyboardButton(x) for x in self.LOCATION_OPTIONS]]
 
-            await update.message.reply_text(f"Was your photo taken off-campus or on-campus? (hill is considered on-campus btw)\n\nOr /cancel this submission 😐", reply_markup=ReplyKeyboardMarkup(location_buttons, one_time_keyboard=True))
+            await update.message.reply_text("Was your photo taken off-campus or on-campus? (hill is considered on-campus btw)", reply_markup=ReplyKeyboardMarkup(location_buttons, one_time_keyboard=True, resize_keyboard=True))
 
-            return self.DESCRIPTION
-        
-        await update.message.reply_text("Please enter a valid number of people in your family that attended the event!\n\nOr /cancel this submission 😬")
+            return self.LOCATION
+    
+        await update.message.reply_text("Please enter a valid number of people in your family that attended the event!")
 
         return self.NUMBER
 
+    async def location(self, update: Update, context: CallbackContext) -> int:
+        """
+        Handles user reply on whether the event was on or off campus.
+        """
+        try:
+            idx = self.LOCATION_OPTIONS.index(update.message.text)
+            context.user_data["submission"]["description"] = [update.message.text]
+            if idx == 0: # On campus
+                buttons = [[KeyboardButton(x) for x in self.ON_CAMPUS_OPTIONS]]
+                await update.message.reply_text("Was this a random meetup, or a planned fun event?", reply_markup=ReplyKeyboardMarkup(buttons, one_time_keyboard=True, resize_keyboard=True))
+            else: # Off campus
+                buttons = [[KeyboardButton(x) for x in self.OFF_CAMPUS_OPTIONS]]
+                await update.message.reply_text("Was this event only with your fam, or did at least 2 people from another fam attend?", reply_markup=ReplyKeyboardMarkup(buttons, one_time_keyboard=True, resize_keyboard=True))
+            return self.DESCRIPTION
+        except ValueError: # Not a valid reply
+            return self.LOCATION
 
     async def description(self, update: Update, context: CallbackContext) -> int:
-        '''
-        Stores the user's last name in the context dictionary.
-        Asks for the user's year then creates a ReplyKeyboardMarkup containing valid options.
-        '''
-        if update.message.text in ["On-Campus", "Off-Campus"]:
-            context.user_data["submission"]["description"] = update.message.text
-
-            await update.message.reply_text(f'Lets score some points for {context.user_data["profile"]["family"]} 🎉\n\nSend me your photo!\n\nOr /cancel this submission 😑', reply_markup=ReplyKeyboardRemove())
-
-            return self.FAMPHOTO
-        return self.DESCRIPTION
+        """
+        Handles user reply on the event description for both on campus and off campus events.
+        """
+        match context.user_data["submission"]["description"][0]:
+            case "On-Campus":
+                if update.message.text not in self.ON_CAMPUS_OPTIONS:
+                    return self.DESCRIPTION
+            case _:
+                if update.message.text not in self.OFF_CAMPUS_OPTIONS:
+                    return self.DESCRIPTION
+        context.user_data["submission"]["description"].append(update.message.text)
+        # Workaround for jsonfield
+        context.user_data["submission"]["description"] = json.dumps(context.user_data["submission"]["description"])
+        await update.message.reply_text(f'Lets score some points for {context.user_data["profile"]["family"]} 🎉\n\nSend me your photo!\n\nOr /cancel this submission 😑', reply_markup=ReplyKeyboardRemove())
+        return self.FAMPHOTO
         
-
     async def famphoto(self, update: Update, context: CallbackContext) -> int:
         photo_file = await update.message.photo[-1].get_file()
         await update.message.reply_text("Uploading your image...(please wait for a moment)")
@@ -85,13 +104,11 @@ class FamSubmissionsCommand(Command):
         await update.message.reply_text(f"Your Fam Photos Submission for {context.user_data['profile']['family']} has been completed. Thank you {update.message.from_user.first_name}!")
         return ConversationHandler.END
         
-
     async def cancel(self, update: Update, context: CallbackContext) -> int:
         await update.message.reply_text("Fam Photos Submission canceled, Ah Gong never remember any info. Ttyl bestie.", reply_markup=ReplyKeyboardRemove())
         context.user_data.pop("submission", None)
         context.user_data.pop("profile", None)
         return ConversationHandler.END
-
 
     def register(self, app: Application, cmd: str = "submit_photo") -> None:
         app.add_handler(ConversationHandler(
@@ -100,6 +117,7 @@ class FamSubmissionsCommand(Command):
             ],
             states={
                 self.NUMBER: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.number)],
+                self.LOCATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.location)],
                 self.DESCRIPTION: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.description)],
                 self.FAMPHOTO: [MessageHandler(filters.PHOTO & ~filters.COMMAND, self.famphoto)]
             },
