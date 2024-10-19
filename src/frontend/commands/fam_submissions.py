@@ -10,11 +10,19 @@ class FamSubmissionsCommand(Command):
     """
     This class handles the Fam Photos Submission conversation.
     """
+    TEXT = {
+        "On-campus random encounter": "random",
+        "On-campus fun event": "fun",
+        "Off-campus single fam event": "single",
+        "Off-campus crossover fam event": "crossover",
+        "SSA-wide event": "ssa"
+    }
+
     def __init__(self):
-        self.LOCATION, self.FAMPHOTO, self.NUMBER, self.DESCRIPTION = range(4)
-        self.LOCATION_OPTIONS = ["On-Campus", "Off-Campus"]
-        self.ON_CAMPUS_OPTIONS = ["Random meetup", "Fun event"]
-        self.OFF_CAMPUS_OPTIONS = ["Only my fam", "Crossover event!"]
+        self.FAMPHOTO, self.NUMBER, self.DESCRIPTION = range(3)
+        g = iter(self.TEXT)
+        self.BUTTONS = [[KeyboardButton(next(g)) for _ in range(2)] for _ in range(2)] + \
+                        [[KeyboardButton(next(g))]]
 
     async def start(self, update: Update, context: CallbackContext) -> int:
         """
@@ -47,48 +55,23 @@ class FamSubmissionsCommand(Command):
         """
         if update.message.text.isdigit() and (num := int(update.message.text)) > 1 and num < 30:
             context.user_data["submission"]["number_of_people"] = num
-            # Location option buttons
-            location_buttons = [[KeyboardButton(x) for x in self.LOCATION_OPTIONS]]
 
-            await update.message.reply_text("Was your photo taken off-campus or on-campus? (hill is considered on-campus btw)", reply_markup=ReplyKeyboardMarkup(location_buttons, one_time_keyboard=True, resize_keyboard=True))
+            await update.message.reply_text("What kind of event was this?", reply_markup=ReplyKeyboardMarkup(self.BUTTONS, one_time_keyboard=True, resize_keyboard=True))
 
-            return self.LOCATION
+            return self.DESCRIPTION
     
         await update.message.reply_text("Please enter a valid number of people in your family that attended the event!")
 
         return self.NUMBER
 
-    async def location(self, update: Update, context: CallbackContext) -> int:
-        """
-        Handles user reply on whether the event was on or off campus.
-        """
-        try:
-            idx = self.LOCATION_OPTIONS.index(update.message.text)
-            context.user_data["submission"]["description"] = [update.message.text]
-            if idx == 0: # On campus
-                buttons = [[KeyboardButton(x) for x in self.ON_CAMPUS_OPTIONS]]
-                await update.message.reply_text("Was this a random meetup, or a planned fun event?", reply_markup=ReplyKeyboardMarkup(buttons, one_time_keyboard=True, resize_keyboard=True))
-            else: # Off campus
-                buttons = [[KeyboardButton(x) for x in self.OFF_CAMPUS_OPTIONS]]
-                await update.message.reply_text("Was this event only with your fam, or did at least 2 people from another fam attend?", reply_markup=ReplyKeyboardMarkup(buttons, one_time_keyboard=True, resize_keyboard=True))
-            return self.DESCRIPTION
-        except ValueError: # Not a valid reply
-            return self.LOCATION
-
     async def description(self, update: Update, context: CallbackContext) -> int:
         """
         Handles user reply on the event description for both on campus and off campus events.
         """
-        match context.user_data["submission"]["description"][0]:
-            case "On-Campus":
-                if update.message.text not in self.ON_CAMPUS_OPTIONS:
-                    return self.DESCRIPTION
-            case _:
-                if update.message.text not in self.OFF_CAMPUS_OPTIONS:
-                    return self.DESCRIPTION
-        context.user_data["submission"]["description"].append(update.message.text)
-        # Workaround for jsonfield
-        context.user_data["submission"]["description"] = json.dumps(context.user_data["submission"]["description"])
+        try:
+            context.user_data["submission"]["description"] = self.TEXT[update.message.text]
+        except KeyError:
+            return self.DESCRIPTION
         await update.message.reply_text(f'Lets score some points for {context.user_data["profile"]["family"]} 🎉\n\nSend me your photo!\n\nOr /cancel this submission 😑', reply_markup=ReplyKeyboardRemove())
         return self.FAMPHOTO
         
@@ -117,7 +100,6 @@ class FamSubmissionsCommand(Command):
             ],
             states={
                 self.NUMBER: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.number)],
-                self.LOCATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.location)],
                 self.DESCRIPTION: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.description)],
                 self.FAMPHOTO: [MessageHandler(filters.PHOTO & ~filters.COMMAND, self.famphoto)]
             },
