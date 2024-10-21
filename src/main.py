@@ -20,6 +20,7 @@ load_dotenv("config.env")
 PUBLIC_COMMANDS = [
     ("start", "Start the bot", cmd.StartCommand),
     ("events", "View upcoming events", cmd.EventsCommand),
+    ("my_profile", "View your profile", cmd.ProfileCommand),
     ("leaderboard", "View the fam points leaderboard", cmd.LeaderboardCommand),
     ("submit_photo", "Submit a fam photo", cmd.FamSubmissionsCommand),
     ("register_groupchat", "Register a groupchat", cmd.RegisterGroupchatCommand),
