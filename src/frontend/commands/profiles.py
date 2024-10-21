@@ -35,11 +35,10 @@ class ProfileCommand(Command):
         ]])
 
         message = \
-            f"Hi {user.first_name}! Here's what we know about you 🤓\n\n" +\
+            f"Hi {user.first_name}! Here's your profile 🤓\n\n" +\
             f"Name: {next(i)} {next(i)}\n" +\
             f"Email: {next(i)}\n" +\
-            f"Fam: {next(i)}\n" +\
-            f"Phone: {next(i)}"
+            f"Fam: {next(i)}\n"
         
         await update.message.reply_text(message)
         return ConversationHandler.END
