@@ -1,3 +1,4 @@
+import os
 from telegram import Update, KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import Application, ConversationHandler, CallbackContext, CommandHandler, MessageHandler, filters
 from backend import ProfileService, SubmissionService
@@ -44,7 +45,8 @@ class FamSubmissionsCommand(Command):
         context.user_data["submission"] = {"member": profile["id"]}
         context.user_data["profile"] = profile
 
-        await update.message.reply_text(f"Hey {user.first_name}! Welcome to photo submissions!\n\nHope your family had a great time with each other. How many people from your family attended this event?\n\n❗ Be sure to only indicate the number of people from your own family. If a group from another family is present, they would have to submit their own photo.\n\nOr send /cancel at any time to cancel this submission 😬")
+        message = f"Hey {user.first_name}! Welcome to photo submissions! Click <a href='{os.environ.get('FAM_POINTS_DOC')}'>here</a> for the submission guidelines.\n\nHope your family had a great time with each other! 😆 Remember, <strong>ONE</strong> submission per event per family, and only make a submission if <strong>at least 2</strong> people from your fam are present. Be sure to only indicate the number of people from your own family. Send /cancel at any time to cancel this submission 😬\n\n Now, how many people from your fam attended this event?"
+        await update.message.reply_text(message, disable_web_page_preview=True, parse_mode= "HTML")
 
         return self.NUMBER
     
