@@ -1,3 +1,4 @@
+import os
 from telegram import Update
 from telegram.ext import ContextTypes, Application, CommandHandler
 from ..command import Command
@@ -23,7 +24,7 @@ class LeaderboardCommand(Command):
         result = "🏅 SSA Fams Leaderboard 🏅\n\n"
         for i, fam in enumerate(leaderboard):
             result += f"{ordinal(i+1)} place: {fam['fam_name']} with {fam['points']} points\n"         
-        result += "\n<i>all submissions will be vetted according to our guidelines listed <a href='https://docs.google.com/document/d/1JzZfbjpELkSnGeY4OaAT8pu13z3IuU-HdcVGitYs77M/edit?usp=sharing'>here</a></i>"
+        result += f"\n<i>all submissions will be vetted according to our guidelines listed <a href='{os.environ.get('FAM_POINTS_DOC')}'>here</a></i>"
         await update.message.reply_text(result, disable_web_page_preview=True, parse_mode= "HTML")
 
 

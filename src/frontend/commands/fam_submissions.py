@@ -1,4 +1,3 @@
-import json
 from telegram import Update, KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import Application, ConversationHandler, CallbackContext, CommandHandler, MessageHandler, filters
 from backend import ProfileService, SubmissionService
