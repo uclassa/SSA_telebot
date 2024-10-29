@@ -65,7 +65,7 @@ class RecordAnnouncementCommand(Command):
         groupchats = GroupchatService().get_chats()
         for chat in groupchats:
             try:
-                await context.bot.copy_messages(chat["id"], update.message.chat_id, context.user_data["announcement"])
+                await context.bot.forward_messages(chat["id"], update.message.chat_id, context.user_data["announcement"])
             except Forbidden: # if group chat has been deleted or if the bot has been removed from the group
                 print(f"Announcement command: sending message failed for group {chat.get('id')}, title {chat.get('title')}")
         await update.message.reply_text("Messages sent to all registered groupchats! 🎉")
