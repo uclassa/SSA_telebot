@@ -1,6 +1,6 @@
 import os
 import requests
-import pytz
+from zoneinfo import ZoneInfo
 import yaml
 from .api_service import APIService
 from datetime import datetime
@@ -17,7 +17,7 @@ class EventService(APIService):
 			constants = yaml.safe_load(file)
 				
 		self.DAY_CUTOFF = constants['DAY_CUTOFF']
-		self.timezone = pytz.timezone(os.environ.get("TIMEZONE"))
+		self.timezone = ZoneInfo(os.environ.get("TIMEZONE"))
 
 	def get(self):
 		'''
@@ -33,7 +33,7 @@ class EventService(APIService):
 
 		if response.status_code == 200:
 			events = response.json()
-			upcoming_events = filter(lambda event: parse(event['start_date']) >= datetime.now(pytz.UTC), events)
+			upcoming_events = filter(lambda event: parse(event['start_date']) >= datetime.now(self.timezone), events)
 			return sorted(upcoming_events, key=lambda event: parse(event['start_date']))
 		else:
 			return []    
