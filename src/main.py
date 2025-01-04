@@ -25,6 +25,7 @@ PUBLIC_COMMANDS = [
     ("submit_photo", "Submit a fam photo", cmd.FamSubmissionsCommand),
     ("register_groupchat", "Register a groupchat", cmd.RegisterGroupchatCommand),
     ("unregister_groupchat", "Unregister a groupchat", cmd.UnregisterGroupchatCommand),
+    ("get_event_photodump", "Get link to g drive folder for event photos", cmd.GetEventGoogleDriveLink)
 ]
 
 ALL_COMMANDS = PUBLIC_COMMANDS + [

@@ -5,3 +5,4 @@ from .start import StartCommand
 from .register_groupchat import RegisterGroupchatCommand, UnregisterGroupchatCommand
 from .record_announcement import RecordAnnouncementCommand
 from .profiles import ProfileCommand
+from .event_photo_submission import GetEventGoogleDriveLink
