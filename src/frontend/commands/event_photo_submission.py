@@ -9,6 +9,27 @@ class GetEventGoogleDriveLink(Command):
   def __init__(self):
     self.event_service = EventService()
 
+  def create_paged_event_keyboard(self, page_number: int = 1) -> list[InlineKeyboardButton]:
+    # gather a list of all the events
+    event_list_data = self.event_service.get_events_from_past_year(page_number=page_number)
+    
+    # build the markup keyboard
+    keyboard = [
+        [InlineKeyboardButton(event['title'], url="google.com")] for event in event_list_data["results"]
+    ]
+
+    pagination_buttons = []
+
+    if event_list_data.get("previous", None):
+      pagination_buttons.append(InlineKeyboardButton("⏮️ Prev", callback_data=int(page_number) - 1) )
+
+    if event_list_data.get("next", None):
+      pagination_buttons.append(InlineKeyboardButton("Next ⏭️", callback_data=int(page_number) + 1))
+      
+    keyboard.append(pagination_buttons)
+
+    return keyboard
+
   async def start(self, update: Update, context: CallbackContext) -> None:
     """
     Accepts a conversation for the google drive photo link from users who have already been registered
@@ -18,26 +39,25 @@ class GetEventGoogleDriveLink(Command):
     profile = ProfileService().get_user_attempt_update(user.id, user.username)
 
     # Check if the user is registered in the database
-    # if not profile:
-    #     await update.message.reply_text(not_registered(user.first_name))
-    #     return await self.cancel(update, context)
+    if not profile:
+        await update.message.reply_text(not_registered(user.first_name))
+        return await self.cancel(update, context)
     
-    # gather a list of all the events
-    event_list = self.event_service.get_events_from_past_year()
-    
-    # build the markup keyboard
-    keyboard = [
-        [InlineKeyboardButton(event['title'], url=event['url'])] for event in event_list
-    ]
+    keyboard = self.create_paged_event_keyboard(page_number=1)
 
-    keyboard += [
-        [InlineKeyboardButton("Next Page", callback_data=1)]
-    ]
+    await update.message.reply_text("Here are the folder links for events that have occured within the past year", reply_markup=InlineKeyboardMarkup(keyboard))
 
-    await update.message.reply_text("Sheesh the dish", reply_markup=InlineKeyboardMarkup(keyboard))
+  async def get_prev_or_next_g_drive_page(self, update: Update, context: CallbackContext) -> None:
+    """
+    Responds with the requested page number for the event google drive links
+    """
+    query = update.callback_query
+    await query.answer()
+
+    keyboard = self.create_paged_event_keyboard(page_number=query.data)
+    await query.edit_message_text("Here are the Google Drive links for events that have occured within the past year", reply_markup=InlineKeyboardMarkup(keyboard))
       
   async def cancel(self, update: Update, context: CallbackContext) -> int:
-    await update.message.reply_text("welp")
     return ConversationHandler.END
   
   def register(self, app: Application, cmd: str = "get_event_photodump") -> None:

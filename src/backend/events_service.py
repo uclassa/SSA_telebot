@@ -19,18 +19,21 @@ class EventService(APIService):
 		self.DAY_CUTOFF = constants['DAY_CUTOFF']
 		self.timezone = ZoneInfo(os.environ.get("TIMEZONE"))
 
-	def get_events_from_past_year(self):
+	def get_events_from_past_year(self, page_number = 1):
 		"""
 		Queries for events that happened less than a year ago
 		"""
-		response = requests.get(self.base_url, headers=self.headers)
+		params = {
+			"page": page_number
+		}
+
+		response = requests.get(self.base_url, headers=self.headers, params=params)
 
 		if response.status_code == 200:
-			events = response.json()
-			events_within_past_year = filter(lambda event: (datetime.now(self.timezone) - parse(event['start_date'])).days < 365, events)
-			return sorted(events_within_past_year, key=lambda event: parse(event['start_date']))
+			events_within_past_year_data = response.json()
+			return events_within_past_year_data
 		else:
-			return []  
+			return {}
 
 	def get(self):
 		'''
