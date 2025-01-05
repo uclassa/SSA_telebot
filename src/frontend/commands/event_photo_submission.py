@@ -9,13 +9,14 @@ class GetEventGoogleDriveLink(Command):
   def __init__(self):
     self.event_service = EventService()
 
-  def create_paged_event_keyboard(self, page_number: int = 1) -> list[InlineKeyboardButton]:
+  def create_paged_event_keyboard(self, page_number: int = 1) -> tuple[list[InlineKeyboardButton], bool]:
     # gather a list of all the events
     event_list_data = self.event_service.get_events_from_past_year(page_number=page_number)
     
     # build the markup keyboard
+    # exclude events that do not have a g drive link
     keyboard = [
-        [InlineKeyboardButton(event['title'], url="google.com")] for event in event_list_data["results"]
+        [InlineKeyboardButton(event['title'], url=event['event_image_folder_url'])] for event in event_list_data["results"] if event.get('event_image_folder_url')
     ]
 
     pagination_buttons = []
@@ -28,7 +29,7 @@ class GetEventGoogleDriveLink(Command):
       
     keyboard.append(pagination_buttons)
 
-    return keyboard
+    return keyboard, bool(keyboard[0])
 
   async def start(self, update: Update, context: CallbackContext) -> None:
     """
@@ -43,9 +44,13 @@ class GetEventGoogleDriveLink(Command):
         await update.message.reply_text(not_registered(user.first_name))
         return await self.cancel(update, context)
     
-    keyboard = self.create_paged_event_keyboard(page_number=1)
-
-    await update.message.reply_text("Here are the folder links for events that have occured within the past year", reply_markup=InlineKeyboardMarkup(keyboard))
+    keyboard, upcoming_events = self.create_paged_event_keyboard(page_number=1)
+    
+    if upcoming_events:
+      await update.message.reply_text("Here are the folder links for events that have occured within the past year", reply_markup=InlineKeyboardMarkup(keyboard))
+    
+    else:
+      await update.message.reply_text("Ah Gong can't seem to find any past events that have a google drive folder link 😭")
 
   async def get_prev_or_next_g_drive_page(self, update: Update, context: CallbackContext) -> None:
     """
