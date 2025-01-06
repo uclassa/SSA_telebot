@@ -19,6 +19,22 @@ class EventService(APIService):
 		self.DAY_CUTOFF = constants['DAY_CUTOFF']
 		self.timezone = ZoneInfo(os.environ.get("TIMEZONE"))
 
+	def get_events_from_past_year(self, page_number = 1):
+		"""
+		Queries for events that happened less than a year ago
+		"""
+		params = {
+			"page": page_number
+		}
+
+		response = requests.get(self.base_url, headers=self.headers, params=params)
+
+		if response.status_code == 200:
+			events_within_past_year_data = response.json()
+			return events_within_past_year_data
+		else:
+			return {}
+
 	def get(self):
 		'''
 		Queries Django backend for data of all events, and filters events to only return upcoming events.

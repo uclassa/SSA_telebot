@@ -21,10 +21,11 @@ PUBLIC_COMMANDS = [
     ("start", "Start the bot", cmd.StartCommand),
     ("events", "View upcoming events", cmd.EventsCommand),
     ("my_profile", "View your profile", cmd.ProfileCommand),
+    ("event_photodump", "View and upload event photodumps", cmd.GetEventGoogleDriveLink),
     ("leaderboard", "View the fam points leaderboard", cmd.LeaderboardCommand),
     ("submit_photo", "Submit a fam photo", cmd.FamSubmissionsCommand),
     ("register_groupchat", "Register a groupchat", cmd.RegisterGroupchatCommand),
-    ("unregister_groupchat", "Unregister a groupchat", cmd.UnregisterGroupchatCommand),
+    ("unregister_groupchat", "Unregister a groupchat", cmd.UnregisterGroupchatCommand)
 ]
 
 ALL_COMMANDS = PUBLIC_COMMANDS + [
