@@ -59,7 +59,7 @@ class GetEventGoogleDriveLink(Command):
     query = update.callback_query
     await query.answer()
 
-    keyboard = self.create_paged_event_keyboard(page_number=query.data)
+    keyboard, _ = self.create_paged_event_keyboard(page_number=query.data)
     await query.edit_message_text("Here are the Google Drive links for events that have occured within the past year", reply_markup=InlineKeyboardMarkup(keyboard))
       
   async def cancel(self, update: Update, context: CallbackContext) -> int:
