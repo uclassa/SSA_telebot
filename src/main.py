@@ -23,13 +23,13 @@ PUBLIC_COMMANDS = [
     ("my_profile", "View your profile", cmd.ProfileCommand),
     ("event_photodump", "View and upload event photodumps", cmd.GetEventGoogleDriveLink),
     ("leaderboard", "View the fam points leaderboard", cmd.LeaderboardCommand),
-    ("submit_photo", "Submit a fam photo", cmd.FamSubmissionsCommand),
-    ("register_groupchat", "Register a groupchat", cmd.RegisterGroupchatCommand),
-    ("unregister_groupchat", "Unregister a groupchat", cmd.UnregisterGroupchatCommand)
+    ("submit_photo", "Submit a fam photo", cmd.FamSubmissionsCommand)
 ]
 
 ALL_COMMANDS = PUBLIC_COMMANDS + [
     ("announce", "Record an announcement", cmd.RecordAnnouncementCommand),
+    ("register_groupchat", "Register a groupchat", cmd.RegisterGroupchatCommand),
+    ("unregister_groupchat", "Unregister a groupchat", cmd.UnregisterGroupchatCommand)
 ]
 
 
