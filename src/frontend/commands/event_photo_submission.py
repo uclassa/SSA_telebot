@@ -11,12 +11,12 @@ class GetEventGoogleDriveLink(Command):
 
     def create_paged_event_keyboard(self, page_number: int = 1) -> tuple[list[InlineKeyboardButton], bool]:
         # gather a list of all the events
-        event_list_data = reversed(self.event_service.get_events_from_past_year(page_number=page_number))
+        event_list_data = self.event_service.get_events_from_past_year(page_number=page_number)
 
         # build the markup keyboard
         # exclude events that do not have a g drive link
         keyboard = [
-            [InlineKeyboardButton(event['title'], url=event['event_image_folder_url'])] for event in event_list_data["results"] if event.get('event_image_folder_url')
+            [InlineKeyboardButton(event['title'], url=event['event_image_folder_url'])] for event in reversed(event_list_data["results"]) if event.get('event_image_folder_url')
         ]
 
         pagination_buttons = []
