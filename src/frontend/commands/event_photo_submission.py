@@ -3,6 +3,7 @@ from telegram import Update, KeyboardButton, InlineKeyboardMarkup, ReplyKeyboard
 from telegram.ext import Application, ConversationHandler, CallbackContext, CommandHandler, MessageHandler, filters, CallbackQueryHandler
 from backend import EventService, ProfileService
 from ..replies import not_registered, error
+from datetime import datetime
 
 
 class GetEventGoogleDriveLink(Command):
@@ -11,21 +12,28 @@ class GetEventGoogleDriveLink(Command):
 
     def create_paged_event_keyboard(self, page_number: int = 1) -> tuple[list[InlineKeyboardButton], bool]:
         # gather a list of all the events
-        event_list_data = self.event_service.get_events_from_past_year(page_number=page_number)
+        event_list_data = self.event_service.get_events_from_past_year(
+            page_number=page_number)
 
         # build the markup keyboard
+        sorted_events = sorted(event_list_data["results"], key=lambda e: datetime.fromisoformat(
+            e["start_date"]), reverse=True)
         # exclude events that do not have a g drive link
+        filtered_events = filter(lambda e: e.get(
+            "event_image_folder_url"), sorted_events)
         keyboard = [
-            [InlineKeyboardButton(event['title'], url=event['event_image_folder_url'])] for event in reversed(event_list_data["results"]) if event.get('event_image_folder_url')
+            [InlineKeyboardButton(event['title'], url=event['event_image_folder_url'])] for event in filtered_events
         ]
 
         pagination_buttons = []
 
         if event_list_data.get("previous", None):
-            pagination_buttons.append(InlineKeyboardButton("⏮️ Prev", callback_data=int(page_number) - 1) )
+            pagination_buttons.append(InlineKeyboardButton(
+                "⏮️ Prev", callback_data=int(page_number) - 1))
 
         if event_list_data.get("next", None):
-            pagination_buttons.append(InlineKeyboardButton("Next ⏭️", callback_data=int(page_number) + 1))
+            pagination_buttons.append(InlineKeyboardButton(
+                "Next ⏭️", callback_data=int(page_number) + 1))
 
         keyboard.append(pagination_buttons)
 
@@ -44,7 +52,8 @@ class GetEventGoogleDriveLink(Command):
             await update.message.reply_text(not_registered(user.first_name))
             return await self.cancel(update, context)
 
-        keyboard, upcoming_events = self.create_paged_event_keyboard(page_number=1)
+        keyboard, upcoming_events = self.create_paged_event_keyboard(
+            page_number=1)
 
         if upcoming_events:
             await update.message.reply_text("Here are the folder links for events that have occured within the past year", reply_markup=InlineKeyboardMarkup(keyboard))
@@ -75,4 +84,5 @@ class GetEventGoogleDriveLink(Command):
             per_user=True
         ))
 
-        app.add_handler(CallbackQueryHandler(self.get_prev_or_next_g_drive_page))
+        app.add_handler(CallbackQueryHandler(
+            self.get_prev_or_next_g_drive_page))
