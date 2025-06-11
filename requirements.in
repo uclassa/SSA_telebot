@@ -1,5 +1,0 @@
-python-dateutil
-python-dotenv # dev dependency, not required for build
-python-telegram-bot
-requests
-PyYAML
